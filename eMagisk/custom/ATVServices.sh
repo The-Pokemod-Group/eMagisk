@@ -28,7 +28,7 @@ checkUpdates() {
             log "Updating from $currentVersion to $remoteVersion"
 
             download "http://storage.googleapis.com/pokemod/Atlas/3-eMagisk.zip" "<SDCARD>/eMagisk.zip" 2>&1
-            if [ -f "<SDCARD>/eMagisk.zip" ]; then
+            if unzip -l "<SDCARD>/eMagisk.zip"; then
                 log "Downloaded new version, rebooting and installing..."
                 mkdir -p /cache/recovery
                 touch /cache/recovery/command
