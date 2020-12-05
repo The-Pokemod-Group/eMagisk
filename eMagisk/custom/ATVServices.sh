@@ -2,13 +2,15 @@
 PACKAGE=com.pokemod.atlas
 
 download() {
+    rm -rf "$2"
     until
         wget \
             --user-agent="Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6" \
             -c "$1" \
             -O "$2"
     do
-        log "Download of ${1##*/} incomplete! Trying again..."
+            rm "$2"
+            log "Download of ${1##*/} incomplete! Trying again..."
         sleep 5s
     done
 }
@@ -27,8 +29,8 @@ checkUpdates() {
             log "There's a new version of eMagisk!"
             log "Updating from $currentVersion to $remoteVersion"
 
-            download "http://storage.googleapis.com/pokemod/Atlas/3-eMagisk.zip" "<SDCARD>/eMagisk.zip" 2>&1
-            if unzip -l "<SDCARD>/eMagisk.zip"; then
+            download "http://storage.googleapis.com/pokemod/Atlas/3-eMagisk.zip" "<SDCARD>/eMagisk.zip"
+            if [ -e "<SDCARD>/eMagisk.zip" ]; then
                 log "Downloaded new version, rebooting and installing..."
                 mkdir -p /cache/recovery
                 touch /cache/recovery/command
