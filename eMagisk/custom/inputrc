@@ -1,0 +1,159 @@
+##################
+## AUTOCOMPLETE ##
+##################
+# Allows readline to bind tty special chars, i.e.:
+# to override custom special key combinations that might
+# be controlled by the emulator.
+set bind-tty-special-chars on
+
+# Troca a ação padrão de TAB para menu-complete (ao invés de complete).
+# menu-complete é mais eficiente pois faz loop pelos autocompletes,
+# quando há uma lista de valores ambíguos.
+TAB: menu-complete
+# Faz a mesma coisa com Shift+TAB, só que faz o caminho inverso.
+"\e[Z": menu-complete-backward
+# If above doesn't work
+#"\e[Z": "\e-1\C-i"
+
+# Não começa de primeira: exibe a lista antes, e depois faz o loop se apertar
+# TAB novamente. Desta forma permite dar uma "espiada" nos nomes dos arquivos
+# ou termos a completar antes de começar a preencher.
+set menu-complete-display-prefix on
+
+# Remove as páginas de autocompletação de aspecto igual a 'more' ou 'less'
+set page-completions off
+
+# display one column with matches
+#set completion-display-width 3
+
+# Ignora maiúsculas e minúsculas quando autocompletando.
+set completion-ignore-case on
+
+# Se completion-ignore-case for on, trata underscores (_) e hífens (-) como iguais
+set completion-map-case on
+
+# Se o tamanho do prefixo comum entre items de autocomplete for maior do que 10,
+# ocultar o prefixo na lista de autocomplete.
+set completion-prefix-display-length 10
+
+# Não autocompleta dot-files a não ser que o padrão comece explicitamente com um ponto
+set match-hidden-files off
+
+# Mostra as páginas de autocompletação para listas acima de 500 items
+set completion-query-items 500
+
+# Mostra a lista inteira de possíveis autocompletações com somente um <Tab>
+set show-all-if-ambiguous on
+set show-all-if-unmodified on
+
+# Adiciona identificadores de arquivos (/ para diretorios, * para arquivos, etc)
+# nas listas de autocompletação
+set visible-stats on
+
+# Não adiciona barras no final de nomes de diretórios quando autocompletando
+# P.S.: se TAB está associado a menu-complete, é recomendado deixar esta
+# variável off, pois pode-se apertar / para autocompletar o diretório escolhido.
+set mark-directories off
+
+# Faz o mesmo para symlinks. Do contrário ele não adicionaria a barra pois
+# teoricamente o synlink é somente um arquivo.
+set mark-symlinked-directories off
+
+## Colors
+# FIXME: Criar uma tabela de cores e arrumar o bug que o PS1 termina em yellow
+#        e portanto o primeiro item do autocomplete também é amarelo.
+# Coloriza as listas de autocomplete (usando variável de ambiente LS_COLORS)
+set colored-stats on
+# Faz o mesmo com o prefixo (no caso de completion-prefix-display-length)
+set colored-completion-prefix on
+
+# Be more intelligent when autocompleting by also looking at the text after
+# the cursor. For example, when the current line is "cd ~/src/mozil", and
+# the cursor is on the "z", pressing Tab will not autocomplete it to "cd
+# ~/src/mozillail", but to "cd ~/src/mozilla". (This is supported by the
+# Readline used by Bash 4.)
+set skip-completed-text on
+
+##################
+## RANDOM STUFF ##
+##################
+# Show control characters
+set echo-control-characters on
+
+# Ao resgatar o primeiro histórico, posiciona o cursor no mesmo lugar aonde
+# estava quando o último comando foi executado.
+set history-preserve-point on
+
+# O gnome-terminal/bash aparentemente não tem bells visíveis, portanto, se
+# desejar usar um bell visível, infelizmente é necessário desativar o bell audível
+# do Gnome Shell inteiro e definir o bell global como visível. Fica ao seu critério.
+# Para mudar o bell audível do Gnome Shell, editar em dconf-editor:
+# org.gnome.desktop.wm.preferences.audible-bell false
+# org.gnome.desktop.wm.preferences visual-bell true
+# org.gnome.desktop.wm.preferences visual-bell-type 'frame-flash'
+#set bell-style audible
+#set prefer-visible-bell off
+
+################
+## UNBINDINGS ##
+################
+## Removes some default bindings so we can use them
+# Alt + Digits:
+"\e-":
+"\e0":
+"\e1":
+"\e2":
+"\e3":
+"\e4":
+"\e5":
+"\e6":
+"\e7":
+"\e8":
+"\e9":
+# F1-F12 except F11
+"\eOP":
+"\eOQ":
+"\eOR":
+"\eOS":
+"\e[15~":
+"\e[17~":
+"\e[18~":
+"\e[19~":
+"\e[20~":
+"\e[21~":
+"\e[24~":
+"\e[24~":
+
+
+################
+## NAVIGATION ##
+################
+# Permite pesquisas no histórico.
+# Após digitar algum texto, ao usar as teclas para cima e para baixo
+# o histórico será pesquisado por comandos começando com tal texto.
+# Para sair do comando sem executá-lo, apertar CTRL+C.
+"\e[B": history-search-forward
+"\e[A": history-search-backward
+
+# Deletes by arguments (i.e: until space, instead of "non-letter")
+"\C-w": shell-backward-kill-word
+"\C-d": shell-kill-word
+"\C-h": backward-kill-word  # ctrl+backspace
+"\e[3;5~": kill-word        # ctrl+delete
+
+# Fixes delete key in android devices
+"\e[3~": delete-char
+
+# Mappings for Ctrl+Arrows
+"\e[1;5C": forward-word
+"\e[1;5D": backward-word
+"\e[5C": forward-word
+"\e[5D": backward-word
+"\e\e[C": forward-word
+"\e\e[D": backward-word
+
+# Mappings for Alt+Arrows
+"\e[1;3D": shell-backward-word      # alt+left
+"\e[1;3C": shell-forward-word       # alt+right
+"\e\177": shell-backward-kill-word  # alt+backspace
+"\e[3;3~": shell-kill-word          # alt+delete

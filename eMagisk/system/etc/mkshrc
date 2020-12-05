@@ -1,0 +1,31 @@
+# Copyright (c) 2010
+#	Thorsten Glaser <t.glaser@tarent.de>
+# This file is provided under the same terms as mksh.
+#-
+# Minimal /system/etc/mkshrc for Android
+
+: ${TERM:=xterm-256color} ${HOME:=<SDCARD>} ${MKSH:=<BIN>/sh} ${HOSTNAME:=android}
+: ${SHELL:=$MKSH} ${USER=$(getprop ro.product.device)}
+if (( USER_ID )); then PS1='$'; else PS1='#'; fi
+
+PS1='$USER@$HOSTNAME:${PWD:-?} '"$PS1 "
+if [ -d "/sbin/.magisk/busybox" ]; then
+  BBDIR="/sbin/.magisk/busybox"
+elif [ -d "/sbin/.core/busybox" ]; then
+  BBDIR="/sbin/.core/busybox"
+fi
+
+PATH=$PATH:/sbin:$BBDIR:.
+export TERM HOME MKSH HOSTNAME SHELL USER PATH
+
+for p in ~/.bin; do
+	[[ -d $p/. ]] || continue
+	[[ :$PATH: = *:$p:* ]] || PATH=$p:$PATH
+done
+
+unset p
+
+export HOME="<SDCARD>"
+<BIN>/bash --rcfile <SDCARD>/.bashrc
+
+: place customizations above this line
