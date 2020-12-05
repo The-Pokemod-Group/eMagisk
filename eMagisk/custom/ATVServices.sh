@@ -54,7 +54,8 @@ checkUpdates() {
 
 checkUpdates &
 
-if ! magiskhide status; then    log "Enabling MagiskHide"
+if ! magiskhide status; then
+    log "Enabling MagiskHide"
     magiskhide enable
 fi
 
@@ -63,12 +64,12 @@ if ! magiskhide ls | grep -m1 com.nianticlabs.pokemongo; then
     magiskhide add com.nianticlabs.pokemongo
 fi
 
-pol=$(sqlite3 /data/adb/magisk.db "select policy from policies where package_name='com.android.shell'")
-if [ "$pol" != 2 ]; then
-    log "Adding root permissions to shell"
-    sqlite3 /data/adb/magisk.db "DELETE from policies WHERE package_name='com.android.shell'" >>$logfile
-    sqlite3 /data/adb/magisk.db "INSERT INTO policies (uid,package_name,policy,until,logging,notification) VALUES($suid,'com.android.shell',2,0,1,1)" >>$logfile
-fi
+# pol=$(sqlite3 /data/adb/magisk.db "select policy from policies where package_name='com.android.shell'")
+# if [ "$pol" != 2 ]; then
+#     log "Adding root permissions to shell"
+#     sqlite3 /data/adb/magisk.db "DELETE from policies WHERE package_name='com.android.shell'"
+#     sqlite3 /data/adb/magisk.db "INSERT INTO policies (uid,package_name,policy,until,logging,notification) VALUES($suid,'com.android.shell',2,0,1,1)"
+# fi
 
 # Set atlas as mock location
 if appops get $PACKAGE android:mock_location android:mock_location; then
@@ -82,10 +83,10 @@ if ! settings get secure location_providers_allowed | grep -q gps; then
     settings put secure location_providers_allowed +gps
 fi
 
-# ## TODO: Double check if this really makes any difference
-# if [ "$(settings get global hdmi_control_enabled)" != "0" ]; then
-#     settings put global hdmi_control_enabled 0
-# fi
+## TODO: Double check if this really makes any difference
+if [ "$(settings get global hdmi_control_enabled)" != "0" ]; then
+    settings put global hdmi_control_enabled 0
+fi
 
 if [ "$(settings get global stay_on_while_plugged_in)" != 3 ]; then
     log "Setting Stay On While Plugged In"

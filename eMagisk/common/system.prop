@@ -2,6 +2,6 @@
 persist.adb.tcp.port=5555
 service.adb.tcp.port=5555
 persist.service.root=0
-persist.sys.locale=en-GB
-ro.platform.keepbackground.app=com.pokemod.atlas
-ro.adb.secure=0
+persist.sys.locale=en-US
+#ro.platform.keepbackground.app=com.pokemod.atlas
+#ro.adb.secure=0

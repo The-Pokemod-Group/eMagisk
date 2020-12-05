@@ -129,7 +129,7 @@ print_modname() {
     ui_print "                                               "
     ui_print "  Nice binaries, bash, and ATV services.       "
     ui_print "                      All In one.              "
-    ui_print "                Version: $ver                  "
+    ui_print "                     $ver                      "
     ui_print "                                               "
     ui_print "     by emi (@emi#0001) - emi@pokemod.dev      "
     ui_print "      Pokemod.dev  | Discord.gg/Pokemod        "
@@ -208,17 +208,16 @@ on_install() {
 
 set_permissions() {
     # The following is the default rule, DO NOT remove
-    set_perm_recursive $MODPATH 0 2000 1755 0644
+    set_perm_recursive $MODPATH 0 0 1755 0644
 
     # Here are some examples:
     # set_perm_recursive  $MODPATH/system/lib       0     0       0755      0644
-    set_perm $MODPATH$BIN/bash 0 0 1755
-    set_perm $MODPATH$BIN/eventrec 0 0 1755
-    set_perm $MODPATH$BIN/strace 0 0 1755
-    set_perm $MODPATH$BIN/tcpdump 0 0 1755
-    set_perm $MODPATH$BIN/nano 0 0 1755
-    set_perm $MODPATH$BIN/nano.bin 0 0 1755
-    set_perm $MODPATH$BIN/wgetty 0 0 1755
+    set_perm $MODPATH/$BIN/bash 0 0 1755  0644
+    set_perm $MODPATH/$BIN/eventrec 0 0 1755  0644
+    set_perm $MODPATH/$BIN/strace 0 0 1755  0644
+    set_perm $MODPATH/$BIN/tcpdump 0 0 1755  0644
+    set_perm $MODPATH/$BIN/nano 0 0 1755  0644
+    set_perm $MODPATH/$BIN/nano.bin 0 0 1755  0644
 }
 
 # You can add more functions to assist your custom script code
