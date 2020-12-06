@@ -12,22 +12,28 @@ log() {
     /system/bin/log -t eMagisk -p i "${@}"
 }
 
-# wait until data is decrypted and system is ready
-# credit: Advanced Charging Controller Daemon (accd)
-log "Waiting for complete boot"
-# wait until data is decrypted and system is ready
+log "##################### Boot #####################"
+log "Waiting for boot to complete..."
+
+# credit for the shit below:
+#   Advanced Charging Controller (teh good stuff)
+# wait until data is decrypted
 until [ -d /sdcard/Download ]; do
     sleep 10
 done
+
+# wait until zygote exists, and
 pgrep zygote >/dev/null && {
+    # wait until sys.boot_comlpeted returns 1
     until [ .$(getprop sys.boot_completed) = .1 ]; do
         sleep 10
     done
 }
-log "System boot completed"
+
+log "System boot completed!"
 
 if [ -f "$MODDIR/ATVServices.sh" ]; then
-    sleep 10
-    log "Sourcing ATVServices.sh"
+    sleep 20
+    log "Starting ATVServices.sh"
     . "$MODDIR/ATVServices.sh"
 fi

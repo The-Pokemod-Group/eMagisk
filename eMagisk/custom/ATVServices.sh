@@ -14,7 +14,7 @@ checkUpdates() {
         log "Checking for updates..."
 
         until ping -c1 8.8.8.8 >/dev/null 2>/dev/null; do
-            sleep 5s
+            sleep 10s
         done
 
         currentVersion=$(sed -n "s/^versionCode=//p" $MODDIR/module.prop)
@@ -61,12 +61,16 @@ if ! magiskhide ls | grep -m1 com.nianticlabs.pokemongo; then
     magiskhide add com.nianticlabs.pokemongo
 fi
 
-# pol=$(sqlite3 /data/adb/magisk.db "select policy from policies where package_name='com.android.shell'")
-# if [ "$pol" != 2 ]; then
-#     log "Adding root permissions to shell"
-#     sqlite3 /data/adb/magisk.db "DELETE from policies WHERE package_name='com.android.shell'"
-#     sqlite3 /data/adb/magisk.db "INSERT INTO policies (uid,package_name,policy,until,logging,notification) VALUES($suid,'com.android.shell',2,0,1,1)"
-# fi
+# puser=$(ls -la /data/data/com.mad.pogodroid/|head -n2|tail -n1|awk '{print $3}' 2>/dev/null)
+# puid=$(id -u "$puser")
+policy=$(sqlite3 /data/adb/magisk.db "select policy from policies where package_name='com.android.shell'")
+if [ "$policy" != 2 ]; then
+    log "Shell current policy is $policy. Adding root permissions to shell..."
+    if ! sqlite3 /data/adb/magisk.db "DELETE from policies WHERE package_name='com.android.shell'" \
+        || ! sqlite3 /data/adb/magisk.db "INSERT INTO policies (uid,package_name,policy,until,logging,notification) VALUES($(id -u shell),'com.android.shell',2,0,1,1)"; then
+            log "ERROR: Could not add shell to Magisk's DB."
+    fi
+fi
 
 # Set atlas as mock location
 if appops get $PACKAGE android:mock_location android:mock_location; then

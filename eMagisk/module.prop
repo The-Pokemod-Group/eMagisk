@@ -1,7 +1,7 @@
 id=emagisk
 name=eMagisk
-version=v7.1.8
-versionCode=718
+version=v7.1.9
+versionCode=719
 author=emi
 description=Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optionally installs ATV resources.
 minMagisk=20000

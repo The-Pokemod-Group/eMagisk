@@ -122,7 +122,7 @@ REPLACE="
 # Set what you want to display when installing your module
 
 print_modname() {
-    ver=$(sed -n "s/^version=//p" $INSTALLER/module.prop)
+    ver=$(sed -n "s/^version=//p" $TMPDIR/module.prop)
     ui_print " "
     ui_print "                                               "
     ui_print "                e M a g i s k                  "
