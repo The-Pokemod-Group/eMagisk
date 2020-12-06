@@ -217,7 +217,7 @@ set_permissions() {
     set_perm_recursive $MODPATH 0 0 1755 0744
 
     # Here are some examples:
-    # set_perm_recursive  $MODPATH/system/lib       0     0       0755      0644
+    set_perm_recursive $MODPATH$BIN 0 0 1755 0777
     # set_perm $MODPATH/$BIN/bash 0 0 1755  0644
     # set_perm $MODPATH/$BIN/eventrec 0 0 1755  0644
     # set_perm $MODPATH/$BIN/strace 0 0 1755  0644
