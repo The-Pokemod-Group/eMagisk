@@ -171,7 +171,7 @@ function h() {
 }
 
 ## Pretty hostname
-_HOSTNAME="$(getprop ro.product.device)"
+_HOSTNAME="$(getprop net.hostname)" #ro.product.device
 
 ###########
 # Aliases #

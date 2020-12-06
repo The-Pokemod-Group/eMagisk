@@ -122,18 +122,21 @@ REPLACE="
 # Set what you want to display when installing your module
 
 print_modname() {
-    ver=$(sed -n "s/^version=//p" $TMPDIR/module.prop)
-    ui_print " "
-    ui_print "                                               "
-    ui_print "                e M a g i s k                  "
-    ui_print "                                               "
-    ui_print "  Nice binaries, bash, and ATV services.       "
-    ui_print "                      All In one.              "
-    ui_print "                     $ver                      "
-    ui_print "                                               "
-    ui_print "     by emi (@emi#0001) - emi@pokemod.dev      "
-    ui_print "      Pokemod.dev  | Discord.gg/Pokemod        "
-    ui_print " "
+    version=$(sed -n "s/^version=//p" $TMPDIR/module.prop)
+    versionCode=$(sed -n "s/^versionCode=//p" $TMPDIR/module.prop)
+    ui_print " _______________________________________________"
+    ui_print "|                                               |"
+    ui_print "|            >   e M a g i s k   <              |"
+    ui_print "|                                               |"
+    ui_print "|                                               |"
+    ui_print "|    Nice binaries, bash, and ATV Services,     |"
+    ui_print "|                      all in one.              |"
+    ui_print "|             $version                            |"
+    ui_print "|                                               |"
+    ui_print "|                                               |"
+    ui_print "|     by emi (@emi#0001) - emi@pokemod.dev      |"
+    ui_print "|      Pokemod.dev  | Discord.gg/Pokemod        |"
+    ui_print "|_______________________________________________| "
     ui_print " "
 }
 
@@ -150,8 +153,12 @@ on_install() {
     else
         BIN=/system/bin
     fi
-    ui_print "   Setting BIN: $BIN."
+    ui_print "- Setting BIN: $BIN."
 
+    # Avoids issues with grepping the version code from modules.prop:
+    touch $MODPATH/version_lock
+    echo "$versionCode" > $MODPATH/version_lock
+    ui_print "> Saved version_lock $versionCode"
 
     # find $MODPATH -type f | sed 's/_update//'
     # find $TMPDIR -type f | sed -e 's|/dev/tmp/||' -e 's|custom/|/sdcard/|'
@@ -160,18 +167,17 @@ on_install() {
     elif [ -d /storage/emulated/0 ]; then
         SDCARD=/storage/emulated/0
     fi
-    ui_print "   Setting SDCARD: $SDCARD."
+    ui_print "- Setting SDCARD: $SDCARD."
 
     sed -i "s|<SDCARD>|$SDCARD|g" $MODPATH/system/etc/mkshrc
-    sed -i "s|<BIN>|$BIN|g"       $MODPATH/system/etc/mkshrc
+    sed -i "s|<BIN>|$BIN|g" $MODPATH/system/etc/mkshrc
     sed -i "s|<SDCARD>|$SDCARD|g" $TMPDIR/custom/bashrc
     sed -i "s|<SDCARD>|$SDCARD|g" $TMPDIR/custom/ATVServices.sh
-    sed -i "s|<BIN>|$BIN|g"       $TMPDIR/custom/bash-completion
 
     for filepath in $TMPDIR/custom/*; do
         filename=${filepath##*/}
         [ "$filename" == "ATVServices.sh" ] && continue
-        if [[ -f "$SDCARD/.${filename}" || -d $SDCARD/${filename} ]]; then
+        if [ -f "$SDCARD/.${filename}" ] || [ -d "$SDCARD/${filename}" ]]; then
             ui_print "   $SDCARD/.${filename} is already intalled! Backing up to $SDCARD/EmagiskBackups/"
             mkdir -p "$SDCARD/EmagiskBackups"
             cp -rf "$SDCARD/.${filename}" "$SDCARD/EmagiskBackups/${filename}.bak"
@@ -189,7 +195,7 @@ on_install() {
     ui_print " "
     ui_print "   After 10 seconds services will be installed!"
     ui_print " "
-    timeout 10 /system/bin/getevent -lc 1 2>&1 | /system/bin/grep VOLUME > $TMPDIR/events
+    timeout 10 /system/bin/getevent -lc 1 2>&1 | /system/bin/grep VOLUME >$TMPDIR/events
 
     ui_print " "
 
@@ -208,16 +214,16 @@ on_install() {
 
 set_permissions() {
     # The following is the default rule, DO NOT remove
-    set_perm_recursive $MODPATH 0 0 1755 0644
+    set_perm_recursive $MODPATH 0 0 1755 0744
 
     # Here are some examples:
     # set_perm_recursive  $MODPATH/system/lib       0     0       0755      0644
-    set_perm $MODPATH/$BIN/bash 0 0 1755  0644
-    set_perm $MODPATH/$BIN/eventrec 0 0 1755  0644
-    set_perm $MODPATH/$BIN/strace 0 0 1755  0644
-    set_perm $MODPATH/$BIN/tcpdump 0 0 1755  0644
-    set_perm $MODPATH/$BIN/nano 0 0 1755  0644
-    set_perm $MODPATH/$BIN/nano.bin 0 0 1755  0644
+    # set_perm $MODPATH/$BIN/bash 0 0 1755  0644
+    # set_perm $MODPATH/$BIN/eventrec 0 0 1755  0644
+    # set_perm $MODPATH/$BIN/strace 0 0 1755  0644
+    # set_perm $MODPATH/$BIN/tcpdump 0 0 1755  0644
+    # set_perm $MODPATH/$BIN/nano 0 0 1755  0644
+    # set_perm $MODPATH/$BIN/nano.bin 0 0 1755  0644
 }
 
 # You can add more functions to assist your custom script code

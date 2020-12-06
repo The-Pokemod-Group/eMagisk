@@ -17,7 +17,7 @@ checkUpdates() {
             sleep 10s
         done
 
-        currentVersion=$(sed -n "s/^versionCode=//p" $MODDIR/module.prop)
+        currentVersion=$(cat $MODDIR/version_lock)
         remoteVersion=$(wget http://storage.googleapis.com/pokemod/Atlas/version -O-)
         if [ ."$remoteVersion" != "." ] && [ "$remoteVersion" != "$currentVersion" ]; then
             log "There's a new version of eMagisk!"
@@ -26,6 +26,7 @@ checkUpdates() {
             download "http://storage.googleapis.com/pokemod/Atlas/3-eMagisk.zip" "<SDCARD>/eMagisk.zip"
             if [ -e "<SDCARD>/eMagisk.zip" ]; then
                 log "Downloaded new version, rebooting to recovery and installing..."
+                rm -rf "<SDCARD>/TWRP"
                 mkdir -p /cache/recovery
                 touch /cache/recovery/command
                 echo '--update_package=<SDCARD>/eMagisk.zip' >>/cache/recovery/command
