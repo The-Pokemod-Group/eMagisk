@@ -108,15 +108,17 @@ if [ "$(pm list packages $PACKAGE)" = "package:$PACKAGE" ]; then
 
             PID=$(pidof com.nianticlabs.pokemongo)
             if [ $? -ne 1 ]; then
-                log "Setting PoGo oom params to unkillable values..."
                 # FIXME: change from here or from Atlas?
-                echo -17 >/proc/$PID/oom_adj
-                echo -1000 >/proc/$PID/oom_score_adj
+                if [ $(cat /proc/$PID/oom_adj) -ne -17 ] || [ $(cat /proc/$PID/oom_score_adj) -ne -1000 ] ; then
+                    log "Setting PoGo oom params to unkillable values..."
+                    echo -17 >/proc/$PID/oom_adj
+                    echo -1000 >/proc/$PID/oom_score_adj
+                fi
             else
                 log "ERROR: PoGO is dead :("
                 # FIXME: respawn from here or from Atlas?
             fi
-            sleep 30
+            sleep 1m
         done
     ) &
 else
