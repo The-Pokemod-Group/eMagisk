@@ -1,5 +1,5 @@
 #!/system/bin/sh
-PACKAGE=com.pokemod.atlas
+ATLASPKG=com.pokemod.atlas
 
 download() {
     until wget --user-agent="Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6" "$1" -O "$2"; do
@@ -62,21 +62,24 @@ if ! magiskhide ls | grep -m1 com.nianticlabs.pokemongo; then
     magiskhide add com.nianticlabs.pokemongo
 fi
 
-# puser=$(ls -la /data/data/com.mad.pogodroid/|head -n2|tail -n1|awk '{print $3}' 2>/dev/null)
-# puid=$(id -u "$puser")
-policy=$(sqlite3 /data/adb/magisk.db "select policy from policies where package_name='com.android.shell'")
-if [ "$policy" != 2 ]; then
-    log "Shell current policy is $policy. Adding root permissions to shell..."
-    if ! sqlite3 /data/adb/magisk.db "DELETE from policies WHERE package_name='com.android.shell'" \
-        || ! sqlite3 /data/adb/magisk.db "INSERT INTO policies (uid,package_name,policy,until,logging,notification) VALUES($(id -u shell),'com.android.shell',2,0,1,1)"; then
-            log "ERROR: Could not add shell to Magisk's DB."
+for package in $ATLASPKG com.android.shell; do
+    packageUID=$(dumpsys package "$package" | grep userId | head -n1 | cut -d= -f2)
+    policy=$(sqlite3 /data/adb/magisk.db "select policy from policies where package_name='$package'")
+    if [ "$policy" != 2 ]; then
+        log "$package current policy is $policy. Adding root permissions..."
+        if ! sqlite3 /data/adb/magisk.db "DELETE from policies WHERE package_name='$package'" ||
+            ! sqlite3 /data/adb/magisk.db "INSERT INTO policies (uid,package_name,policy,until,logging,notification) VALUES($packageUID,'$package',2,0,1,1)"; then
+            log "ERROR: Could not add $package (UID: $packageUID) to Magisk's DB."
+        fi
+    else
+        log "Root permissions for $package are OK!"
     fi
-fi
+done
 
 # Set atlas as mock location
-if appops get $PACKAGE android:mock_location android:mock_location; then
-    log "Setting Atlas as mock location"
-    appops set $PACKAGE android:mock_location allow
+if appops get $ATLASPKG android:mock_location | grep -q 'No operations'; then
+    log "Giving $ATLASPKG mock location permissions"
+    appops set $ATLASPKG android:mock_location allow
 fi
 
 # Set GPS location provider:
@@ -86,30 +89,28 @@ if ! settings get secure location_providers_allowed | grep -q gps; then
 fi
 
 ## TODO: Double check if this really makes any difference
-if [ "$(settings get global hdmi_control_enabled)" != "0" ]; then
-    settings put global hdmi_control_enabled 0
-fi
+# if [ "$(settings get global hdmi_control_enabled)" != "0" ]; then
+#     settings put global hdmi_control_enabled 0
+# fi
 
 if [ "$(settings get global stay_on_while_plugged_in)" != 3 ]; then
     log "Setting Stay On While Plugged In"
     settings put global stay_on_while_plugged_in 3
 fi
 
-# Run in background and kep pogo open
-if [ "$(pm list packages $PACKAGE)" = "package:$PACKAGE" ]; then
+# Health Service
+if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
     (
         while :; do
-            PID=$(pidof "$PACKAGE")
+            PID=$(pidof "$ATLASPKG:mapping")
             if [ $? -eq 1 ]; then
-                log "Atlas not enabled..."
-                # FIXME: do it here or in atlas?
-                am start-foreground-service $PACKAGE.MappingService
+                log "Atlas Mapping Service is off for some reason! Restarting..."
+                am startservice $ATLASPKG/.MappingService
             fi
 
             PID=$(pidof com.nianticlabs.pokemongo)
             if [ $? -ne 1 ]; then
-                # FIXME: change from here or from Atlas?
-                if [ $(cat /proc/$PID/oom_adj) -ne -17 ] || [ $(cat /proc/$PID/oom_score_adj) -ne -1000 ] ; then
+                if [ $(cat /proc/$PID/oom_adj) -ne -17 ] || [ $(cat /proc/$PID/oom_score_adj) -ne -1000 ]; then
                     log "Setting PoGo oom params to unkillable values..."
                     echo -17 >/proc/$PID/oom_adj
                     echo -1000 >/proc/$PID/oom_score_adj
