@@ -82,10 +82,21 @@ if ! appops get $ATLASPKG android:mock_location | grep -qm1 'No operations'; the
     appops set $ATLASPKG android:mock_location 2
 fi
 
-# Set GPS location provider:
-if ! settings get secure location_providers_allowed | grep -q gps; then
-    log "Enabling GPS location provider"
-    settings put secure location_providers_allowed +gps
+# Disable all location providers
+if ! settings get; then
+    log "Checking allowed location providers as 'shell' user"
+    allowedProviders=".$(su shell -c settings get secure location_providers_allowed)"
+else
+    log "Checking allowed location providers"
+    allowedProviders=".$(settings get secure location_providers_allowed)"
+fi
+
+if [ "$allowedProviders" != "." ]; then
+    log "Disabling location providers..."
+    if ! settings put secure location_providers_allowed -gps,-wifi,-bluetooth,-network >/dev/null; then
+        log "Running as 'shell' user"
+        su shell -c 'settings put secure location_providers_allowed -gps,-wifi,-bluetooth,-network'
+    fi
 fi
 
 ## TODO: Double check if this really makes any difference
