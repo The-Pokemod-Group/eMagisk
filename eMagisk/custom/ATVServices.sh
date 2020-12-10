@@ -118,18 +118,6 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
                 log "Atlas Mapping Service is off for some reason! Restarting..."
                 am startservice $ATLASPKG/.MappingService
             fi
-
-            PID=$(pidof com.nianticlabs.pokemongo)
-            if [ $? -ne 1 ]; then
-                if [ $(cat /proc/$PID/oom_adj) -ne -17 ] || [ $(cat /proc/$PID/oom_score_adj) -ne -1000 ]; then
-                    log "Setting PoGo oom params to unkillable values..."
-                    echo -17 >/proc/$PID/oom_adj
-                    echo -1000 >/proc/$PID/oom_score_adj
-                fi
-            else
-                log "ERROR: PoGO is dead :("
-                # FIXME: respawn from here or from Atlas?
-            fi
             sleep 1m
         done
     ) &
