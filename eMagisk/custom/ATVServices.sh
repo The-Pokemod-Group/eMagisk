@@ -76,10 +76,10 @@ for package in $ATLASPKG com.android.shell; do
     fi
 done
 
-# Set atlas as mock location
-if appops get $ATLASPKG android:mock_location | grep -q 'No operations'; then
-    log "Giving $ATLASPKG mock location permissions"
-    appops set $ATLASPKG android:mock_location allow
+# Set atlas mock location permission as ignore
+if ! appops get $ATLASPKG android:mock_location | grep -qm1 'No operations'; then
+    log "Removing mock location permissions from $ATLASPKG"
+    appops set $ATLASPKG android:mock_location 2
 fi
 
 # Set GPS location provider:
