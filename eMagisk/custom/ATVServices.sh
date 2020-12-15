@@ -1,5 +1,6 @@
 #!/system/bin/sh
 ATLASPKG=com.pokemod.atlas
+UNINSTALLPKGS="cm.aptoidetv.pt com.netflix.mediaclient org.xbmc.kodi com.google.android.youtube.tv"
 
 download() {
     until wget --user-agent="Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6" "$1" -O "$2"; do
@@ -17,7 +18,7 @@ checkUpdates() {
             sleep 10s
         done
 
-        currentVersion=$(cat $MODDIR/version_lock)
+        currentVersion=$(cat "$MODDIR/version_lock")
         remoteVersion=$(wget http://storage.googleapis.com/pokemod/Atlas/version -O-)
         if [ ."$remoteVersion" != "." ] && [ "$remoteVersion" != "$currentVersion" ]; then
             log "There's a new version of eMagisk!"
@@ -52,6 +53,13 @@ checkUpdates() {
 
 checkUpdates &
 
+echo "$UNINSTALLPKGS" | tr ' ' '\n' | while read -r item; do
+    if ! dumpsys package "$item" | \grep -qm1 "Unable to find package"; then
+        log "Uninstalling $item..."
+        pm uninstall "$item"
+    fi
+done
+
 if ! magiskhide status; then
     log "Enabling MagiskHide"
     magiskhide enable
@@ -59,7 +67,7 @@ fi
 
 if ! magiskhide ls | grep -m1 com.nianticlabs.pokemongo; then
     log "Adding PoGo to magiskhide"
-    magiskhide add com.nianticlabs.pokemongo
+    magiskhide add com.nianticlabs.pokemongo65
 fi
 
 for package in $ATLASPKG com.android.shell; do
@@ -68,7 +76,7 @@ for package in $ATLASPKG com.android.shell; do
     if [ "$policy" != 2 ]; then
         log "$package current policy is $policy. Adding root permissions..."
         if ! sqlite3 /data/adb/magisk.db "DELETE from policies WHERE package_name='$package'" ||
-            ! sqlite3 /data/adb/magisk.db "INSERT INTO policies (uid,package_name,policy,until,logging,notification) VALUES($packageUID,'$package',2,0,1,1)"; then
+           ! sqlite3 /data/adb/magisk.db "INSERT INTO policies (uid,package_name,policy,until,logging,notification) VALUES($packageUID,'$package',2,0,1,1)"; then
             log "ERROR: Could not add $package (UID: $packageUID) to Magisk's DB."
         fi
     else
