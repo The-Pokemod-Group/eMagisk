@@ -1,6 +1,6 @@
 #!/system/bin/sh
 ATLASPKG=com.pokemod.atlas
-UNINSTALLPKGS="cm.aptoidetv.pt com.netflix.mediaclient org.xbmc.kodi com.google.android.youtube.tv"
+UNINSTALLPKGS="com.ionitech.airscreen cm.aptoidetv.pt com.netflix.mediaclient org.xbmc.kodi com.google.android.youtube.tv"
 
 download() {
     until wget --user-agent="Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6" "$1" -O "$2"; do
