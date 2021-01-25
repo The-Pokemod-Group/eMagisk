@@ -201,6 +201,8 @@ on_install() {
 
     if cat $TMPDIR/events | grep "VOLUMEUP"; then
         ui_print " >>> Not installing ATV Services!"
+        rm "$TMPDIR/module.prop"
+        export PROPFILE=false
     else
         ui_print " >>> Installing ATV services..."
         cp -rf "$TMPDIR/custom/ATVServices.sh" "$MODPATH/ATVServices.sh"

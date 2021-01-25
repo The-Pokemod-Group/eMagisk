@@ -1,7 +1,20 @@
 # TODO: make this respect the user selection when installing
+
+# Enable wifi adb by default
 persist.adb.tcp.port=5555
 service.adb.tcp.port=5555
+
+# Disable builtin root to pass snet
 persist.service.root=0
+
+# Change default language
 persist.sys.locale=en-US
+
 #ro.platform.keepbackground.app=com.pokemod.atlas
 #ro.adb.secure=0
+
+# New testing things
+ro.product.locale.region=ALL
+ro.wifi.channels=14
+config.disable_bluetooth=true
+ro.HOME_APP_ADJ=0

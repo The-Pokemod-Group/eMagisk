@@ -47,6 +47,12 @@ checkUpdates() {
             log "currentVersion: $currentVersion | remoteVersion: $remoteVersion"
         fi
 
+        # WIP Pogo
+        # currentVersion="$(dumpsys package com.nianticlabs.pokemongo|awk -F'=' '/versionName/{print $2}')"
+        # remoteVersion=$(wget http://storage.googleapis.com/pokemod/Atlas/version -O-)
+
+        # TODO: Atlas
+
         sleep 1h
     done
 }
@@ -60,14 +66,20 @@ echo "$UNINSTALLPKGS" | tr ' ' '\n' | while read -r item; do
     fi
 done
 
+if [ "$(pm list packages -e com.android.vending)" = "package:com.android.vending" ]; then
+    log "Disabling Play Store"
+    pm disable-user com.android.vending
+    pm disable com.android.vending
+fi
+
 if ! magiskhide status; then
     log "Enabling MagiskHide"
     magiskhide enable
 fi
 
 if ! magiskhide ls | grep -m1 com.nianticlabs.pokemongo; then
-    log "Adding PoGo to magiskhide"
-    magiskhide add com.nianticlabs.pokemongo65
+    log "Adding PoGo to MagiskHide"
+    magiskhide add com.nianticlabs.pokemongo
 fi
 
 for package in $ATLASPKG com.android.shell; do
@@ -76,7 +88,7 @@ for package in $ATLASPKG com.android.shell; do
     if [ "$policy" != 2 ]; then
         log "$package current policy is $policy. Adding root permissions..."
         if ! sqlite3 /data/adb/magisk.db "DELETE from policies WHERE package_name='$package'" ||
-           ! sqlite3 /data/adb/magisk.db "INSERT INTO policies (uid,package_name,policy,until,logging,notification) VALUES($packageUID,'$package',2,0,1,1)"; then
+            ! sqlite3 /data/adb/magisk.db "INSERT INTO policies (uid,package_name,policy,until,logging,notification) VALUES($packageUID,'$package',2,0,1,1)"; then
             log "ERROR: Could not add $package (UID: $packageUID) to Magisk's DB."
         fi
     else
