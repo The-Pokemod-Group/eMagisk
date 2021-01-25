@@ -66,11 +66,13 @@ echo "$UNINSTALLPKGS" | tr ' ' '\n' | while read -r item; do
     fi
 done
 
-if [ "$(pm list packages -e com.android.vending)" = "package:com.android.vending" ]; then
-    log "Disabling Play Store"
-    pm disable-user com.android.vending
-    pm disable com.android.vending
-fi
+log "Enabling Play Store"
+pm enable com.android.vending
+# TODO:
+# if [ "$(pm list packages -e com.android.vending)" = "package:com.android.vending" ]; then
+#     log "Disabling Play Store"
+#     pm disable-user com.android.vending
+# fi
 
 if ! magiskhide status; then
     log "Enabling MagiskHide"
@@ -133,6 +135,23 @@ fi
 if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
     (
         while :; do
+            PID=$(pidof com.nianticlabs.pokemongo)
+            if [ $? -ne 1 ]; then
+                # FIXME: change from here or from Atlas?
+                if [ $(cat /proc/$PID/oom_adj) -ne -17 ] || [ $(cat /proc/$PID/oom_score_adj) -ne -1000 ]; then
+                    log "Setting PoGo oom params to unkillable values..."
+                    echo -17 >/proc/$PID/oom_adj
+                    echo -1000 >/proc/$PID/oom_score_adj
+                fi
+            else
+                log "PoGo is not running! Restarting everything..."
+                am stopservice $ATLASPKG/.MappingService
+                killall -9 $ATLASPKG/.MappingService
+                killall -9 com.nianticlabs.pokemongo
+                am startservice $ATLASPKG/.MappingService
+                monkey -p com.nianticlabs.pokemongo -c android.intent.category.LAUNCHER 1
+            fi
+
             PID=$(pidof "$ATLASPKG:mapping")
             if [ $? -eq 1 ]; then
                 log "Atlas Mapping Service is off for some reason! Restarting..."
