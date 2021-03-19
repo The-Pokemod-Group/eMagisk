@@ -145,7 +145,18 @@ fi
 # Health Service
 if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
     (
+        is_atlas_running=0
         while :; do
+            PID=$(pidof "$ATLASPKG:mapping")
+            if [ $? -eq 1 ]; then
+                log "Atlas Mapping Service is off for some reason! Restarting..."
+                is_atlas_running=0
+                force_restart
+                continue
+            else
+                is_atlas_running=1
+            fi
+
             PID=$(pidof com.nianticlabs.pokemongo)
             if [ $? -ne 1 ]; then
                 # FIXME: change from here or from Atlas?
@@ -155,17 +166,17 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
                     echo -1000 >/proc/$PID/oom_score_adj
                 fi
             else
-                log "PoGo is not running! Restarting everything..."
-                force_restart
-                sleep 1m
-                continue
+                log "PoGo is not running!"
+                if [ $is_atlas_running -eq 1 ]; then
+                    log "Atlas is running though, so will let it start PoGo instead!"
+                    monkey -p com.nianticlabs.pokemongo 1
+                else
+                    log "Atlas is not even running! Resetting everything!"
+                    force_restart
+                    continue
+                fi
             fi
 
-            PID=$(pidof "$ATLASPKG:mapping")
-            if [ $? -eq 1 ]; then
-                log "Atlas Mapping Service is off for some reason! Restarting..."
-                force_restart
-            fi
             sleep 1m
         done
     ) &
