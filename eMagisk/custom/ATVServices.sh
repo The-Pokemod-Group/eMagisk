@@ -2,6 +2,17 @@
 ATLASPKG=com.pokemod.atlas
 UNINSTALLPKGS="com.ionitech.airscreen cm.aptoidetv.pt com.netflix.mediaclient org.xbmc.kodi com.google.android.youtube.tv"
 
+force_restart() {
+    am stopservice $ATLASPKG/.MappingService
+    killall -9 $ATLASPKG/.MappingService
+    killall -9 com.nianticlabs.pokemongo
+    sleep 3s
+    monkey -p com.pokemod.atlas 1
+    sleep 3s
+    am startservice $ATLASPKG/.MappingService
+    monkey -p com.nianticlabs.pokemongo 1
+}
+
 download() {
     until wget --user-agent="Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6" "$1" -O "$2"; do
         rm -rf "$2"
@@ -145,17 +156,15 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
                 fi
             else
                 log "PoGo is not running! Restarting everything..."
-                am stopservice $ATLASPKG/.MappingService
-                killall -9 $ATLASPKG/.MappingService
-                killall -9 com.nianticlabs.pokemongo
-                am startservice $ATLASPKG/.MappingService
-                monkey -p com.nianticlabs.pokemongo -c android.intent.category.LAUNCHER 1
+                force_restart
+                sleep 1m
+                continue
             fi
 
             PID=$(pidof "$ATLASPKG:mapping")
             if [ $? -eq 1 ]; then
                 log "Atlas Mapping Service is off for some reason! Restarting..."
-                am startservice $ATLASPKG/.MappingService
+                force_restart
             fi
             sleep 1m
         done
