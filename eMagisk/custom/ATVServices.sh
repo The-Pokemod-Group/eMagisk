@@ -31,7 +31,7 @@ checkUpdates() {
 
         currentVersion=$(cat "$MODDIR/version_lock")
         remoteVersion=$(wget http://storage.googleapis.com/pokemod/Atlas/version -O-)
-        if [ ."$remoteVersion" != "." ] && [ "$remoteVersion" != "$currentVersion" ]; then
+        if [ ."$remoteVersion" != "." ] && [ "$remoteVersion" -gt "$currentVersion" ]; then
             log "There's a new version of eMagisk!"
             log "Updating from $currentVersion to $remoteVersion"
 
