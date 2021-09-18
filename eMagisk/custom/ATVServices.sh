@@ -157,14 +157,18 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
                 is_atlas_running=1
             fi
 
-            PID=$(pidof com.nianticlabs.pokemongo)
-            if [ $? -ne 1 ]; then
-                # FIXME: change from here or from Atlas?
-                if [ $(cat /proc/$PID/oom_adj) -ne -17 ] || [ $(cat /proc/$PID/oom_score_adj) -ne -1000 ]; then
-                    log "Setting PoGo oom params to unkillable values..."
-                    echo -17 >/proc/$PID/oom_adj
-                    echo -1000 >/proc/$PID/oom_score_adj
+            while true; do
+                PID=$(pidof com.nianticlabs.pokemongo)
+                if [ $? -ne 1 ]; then
+                    # FIXME: change from here or from Atlas?
+                    if [ $(cat /proc/$PID/oom_adj) -ne -17 ] || [ $(cat /proc/$PID/oom_score_adj) -ne -1000 ]; then
+                        echo "Setting PoGo oom params to unkillable values..."
+                        echo -17 >/proc/$PID/oom_adj
+                        echo -1000 >/proc/$PID/oom_score_adj
+                    fi
                 fi
+                sleep 1m
+            done
             else
                 log "PoGo is not running!"
                 if [ $is_atlas_running -eq 1 ]; then
