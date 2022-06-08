@@ -1,16 +1,16 @@
 #!/system/bin/sh
 ATLASPKG=com.pokemod.atlas.beta
+POGOPKG=com.nianticlabs.pokemongo
 UNINSTALLPKGS="com.ionitech.airscreen cm.aptoidetv.pt com.netflix.mediaclient org.xbmc.kodi com.google.android.youtube.tv"
 
 force_restart() {
-    am stopservice $ATLASPKG/.MappingService
-    killall -9 $ATLASPKG/.MappingService
-    killall -9 com.nianticlabs.pokemongo
-    sleep 3s
-    monkey -p com.pokemod.atlas 1
-    sleep 3s
-    am startservice $ATLASPKG/.MappingService
-    # monkey -p com.nianticlabs.pokemongo 1
+    # killall -9 $POGOPKG
+    killall -9 $ATLASPKG
+    monkey -p $ATLASPKG 1
+    sleep 5s
+    am stopservice $ATLASPKG/com.pokemod.atlas.services.MappingService
+    am startservice $ATLASPKG/com.pokemod.atlas.services.MappingService
+    # monkey -p $POGOPKG 1
 }
 
 download() {
@@ -59,7 +59,7 @@ checkUpdates() {
         fi
 
         # WIP Pogo
-        # currentVersion="$(dumpsys package com.nianticlabs.pokemongo|awk -F'=' '/versionName/{print $2}')"
+        # currentVersion="$(dumpsys package $POGOPKG|awk -F'=' '/versionName/{print $2}')"
         # remoteVersion=$(wget http://storage.googleapis.com/pokemod/Atlas/version -O-)
 
         # TODO: Atlas
@@ -77,22 +77,22 @@ echo "$UNINSTALLPKGS" | tr ' ' '\n' | while read -r item; do
     fi
 done
 
-log "Enabling Play Store"
-pm enable com.android.vending
+# log "Enabling Play Store"
+# pm disable com.android.vending
 # TODO:
-# if [ "$(pm list packages -e com.android.vending)" = "package:com.android.vending" ]; then
-#     log "Disabling Play Store"
-#     pm disable-user com.android.vending
-# fi
+if [ "$(pm list packages -e com.android.vending)" = "package:com.android.vending" ]; then
+    log "Disabling Play Store"
+    pm disable-user com.android.vending
+fi
 
 if ! magiskhide status; then
     log "Enabling MagiskHide"
     magiskhide enable
 fi
 
-if ! magiskhide ls | grep -m1 com.nianticlabs.pokemongo; then
+if ! magiskhide ls | grep -m1 $POGOPKG; then
     log "Adding PoGo to MagiskHide"
-    magiskhide add com.nianticlabs.pokemongo
+    magiskhide add $POGOPKG
 fi
 
 for package in $ATLASPKG com.android.shell; do
@@ -160,15 +160,9 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
                 is_atlas_running=1
             fi
 
-            PID=$(pidof com.nianticlabs.pokemongo)
+            PID=$(pidof $POGOPKG)
             if [ $? -ne 1 ]; then
                 count=0
-                # FIXME: change from here or from Atlas?
-                if [ "$(cat /proc/$PID/oom_adj)" -ne -17 ] || [ "$(cat /proc/$PID/oom_score_adj)" -ne -1000 ]; then
-                    log "Setting PoGo oom params to unkillable values..."
-                    echo -17 >/proc/$PID/oom_adj
-                    echo -1000 >/proc/$PID/oom_score_adj
-                fi
             else
                 log "PoGo is not running!"
                 if [ $is_atlas_running -eq 1 ]; then
