@@ -4,11 +4,10 @@ POGOPKG=com.nianticlabs.pokemongo
 UNINSTALLPKGS="com.ionitech.airscreen cm.aptoidetv.pt com.netflix.mediaclient org.xbmc.kodi com.google.android.youtube.tv"
 
 force_restart() {
-    # killall -9 $POGOPKG
-    killall -9 $ATLASPKG
-    # monkey -p $ATLASPKG 1
-    sleep 5s
     am stopservice $ATLASPKG/com.pokemod.atlas.services.MappingService
+    killall -9 $ATLASPKG
+    killall -9 $POGOPKG
+    monkey -p $ATLASPKG 1
     am startservice $ATLASPKG/com.pokemod.atlas.services.MappingService
     # monkey -p $POGOPKG 1
 }
@@ -145,28 +144,19 @@ fi
 # Health Service
 if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
     (
-        is_atlas_running=0
         count=0
+        log "eMagisk v$(cat version_lock). Starting health check service..."
         while :; do
-            sleep 60
+            sleep $((120+$RANDOM%10))
 
             if ! pidof "$ATLASPKG:mapping"; then
-                log "Atlas Mapping Service is off for some reason! Restarting..."
-                is_atlas_running=0
-                count=0
-                force_restart
-            else
-                is_atlas_running=1
-            fi
-
-            if ! pidof $POGOPKG; then
-                if [ $is_atlas_running -eq 1 ]; then
-                    count=$((count+1))
-                    log "PoGo is not running, but Atlas is. If this happens again during 5 minutes will restart! ($count)"
-                fi
-                if [ $count -gt 5 ]; then
-                    log "Happened five times. Restarting everything!"
-                    count=0
+                log "Atlas Mapping Service is off for some reason! If this happens again during 6 minutes will restart!"
+                count=$((count+1))
+                if [ $count -ge 10 ]; then
+                    log "Atlas Mapping Service is off for over 20 minutes! Rebooting device..."
+                    reboot
+                elif [ $count -ge 3 ]; then
+                    log "Atlas Mapping Service is off for over 6 minutes! Restarting services..."
                     force_restart
                 fi
             else
