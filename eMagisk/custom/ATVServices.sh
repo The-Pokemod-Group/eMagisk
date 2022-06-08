@@ -1,5 +1,5 @@
 #!/system/bin/sh
-ATLASPKG=com.pokemod.atlas
+ATLASPKG=com.pokemod.atlas.beta
 UNINSTALLPKGS="com.ionitech.airscreen cm.aptoidetv.pt com.netflix.mediaclient org.xbmc.kodi com.google.android.youtube.tv"
 
 force_restart() {
@@ -10,7 +10,7 @@ force_restart() {
     monkey -p com.pokemod.atlas 1
     sleep 3s
     am startservice $ATLASPKG/.MappingService
-    monkey -p com.nianticlabs.pokemongo 1
+    # monkey -p com.nianticlabs.pokemongo 1
 }
 
 download() {
@@ -68,7 +68,7 @@ checkUpdates() {
     done
 }
 
-checkUpdates &
+# checkUpdates &
 
 echo "$UNINSTALLPKGS" | tr ' ' '\n' | while read -r item; do
     if ! dumpsys package "$item" | \grep -qm1 "Unable to find package"; then
@@ -77,17 +77,17 @@ echo "$UNINSTALLPKGS" | tr ' ' '\n' | while read -r item; do
     fi
 done
 
-# log "Enabling Play Store"
-# pm enable com.android.vending
+log "Enabling Play Store"
+pm enable com.android.vending
+# TODO:
+# if [ "$(pm list packages -e com.android.vending)" = "package:com.android.vending" ]; then
+#     log "Disabling Play Store"
+#     pm disable-user com.android.vending
+# fi
 
 if ! magiskhide status; then
     log "Enabling MagiskHide"
     magiskhide enable
-fi
-
-if [ "$(pm list packages -e com.android.vending)" = "package:com.android.vending" ]; then
-    log "Disabling Play Store"
-    pm disable-user com.android.vending
 fi
 
 if ! magiskhide ls | grep -m1 com.nianticlabs.pokemongo; then
@@ -145,20 +145,50 @@ fi
 # Health Service
 if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
     (
+        is_atlas_running=0
+        count=0
         while :; do
+            sleep 1m
+
+            if ! pidof "$ATLASPKG:mapping"; then
+                log "Atlas Mapping Service is off for some reason! Restarting..."
+                is_atlas_running=0
+                count=0
+                force_restart
+                continue
+            else
+                is_atlas_running=1
+            fi
+
             PID=$(pidof com.nianticlabs.pokemongo)
             if [ $? -ne 1 ]; then
+                count=0
                 # FIXME: change from here or from Atlas?
-                if [ $(cat /proc/$PID/oom_adj) -ne -17 ] || [ $(cat /proc/$PID/oom_score_adj) -ne -1000 ]; then
-                    echo "Setting PoGo oom params to unkillable values..."
+                if [ "$(cat /proc/$PID/oom_adj)" -ne -17 ] || [ "$(cat /proc/$PID/oom_score_adj)" -ne -1000 ]; then
+                    log "Setting PoGo oom params to unkillable values..."
                     echo -17 >/proc/$PID/oom_adj
                     echo -1000 >/proc/$PID/oom_score_adj
                 fi
+            else
+                log "PoGo is not running!"
+                if [ $is_atlas_running -eq 1 ]; then
+                    count=$((count+1))
+                    log "Atlas is running though, so will let it start PoGo instead!"
+                fi
+                if [ $count -ge 5 ]; then
+                    log "Atlas is running but pogo wasn't for 5 times, restarting everything!"
+                    count=0
+                    force_restart
+                    continue
+                fi
             fi
-            sleep 1m
+
+            if ! pidof adbd; then
+                log "ADBD wasn't running! Starting service..."
+                start adbd
+            fi
         done
     ) &
 else
     log "Atlas isn't installed on this device! The daemon will stop."
 fi
-
