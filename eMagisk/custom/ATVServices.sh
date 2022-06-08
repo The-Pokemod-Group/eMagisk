@@ -145,12 +145,14 @@ fi
 if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
     (
         count=0
-        log "eMagisk v$(cat version_lock). Starting health check service..."
+        log "eMagisk v$(cat "$MODDIR/version_lock"). Starting health check service..."
         while :; do
             sleep $((120+$RANDOM%10))
 
             if ! pidof "$ATLASPKG:mapping"; then
-                log "Atlas Mapping Service is off for some reason! If this happens again during 6 minutes will restart!"
+                log "Atlas Mapping Service is off for some reason!"
+                log "  -> If this happens for 6 minutes eMagisk will attempt to force restart Atlas!"
+                log "  -> If this keeps happening for a total of 20 minutes, eMagisk will reboot the device!"
                 count=$((count+1))
                 if [ $count -ge 10 ]; then
                     log "Atlas Mapping Service is off for over 20 minutes! Rebooting device..."
@@ -160,7 +162,10 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
                     force_restart
                 fi
             else
-                count=0
+                if [ $count -gt 0 ]; then
+                    log "Atlas Mapping Service is back to operational! :)"
+                    count=0
+                fi
             fi
 
             if ! pidof adbd; then
