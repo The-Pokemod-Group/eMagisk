@@ -6,7 +6,7 @@ UNINSTALLPKGS="com.ionitech.airscreen cm.aptoidetv.pt com.netflix.mediaclient or
 force_restart() {
     # killall -9 $POGOPKG
     killall -9 $ATLASPKG
-    monkey -p $ATLASPKG 1
+    # monkey -p $ATLASPKG 1
     sleep 5s
     am stopservice $ATLASPKG/com.pokemod.atlas.services.MappingService
     am startservice $ATLASPKG/com.pokemod.atlas.services.MappingService
@@ -148,33 +148,29 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
         is_atlas_running=0
         count=0
         while :; do
-            sleep 1m
+            sleep 60
 
             if ! pidof "$ATLASPKG:mapping"; then
                 log "Atlas Mapping Service is off for some reason! Restarting..."
                 is_atlas_running=0
                 count=0
                 force_restart
-                continue
             else
                 is_atlas_running=1
             fi
 
-            PID=$(pidof $POGOPKG)
-            if [ $? -ne 1 ]; then
-                count=0
-            else
-                log "PoGo is not running!"
+            if ! pidof $POGOPKG; then
                 if [ $is_atlas_running -eq 1 ]; then
                     count=$((count+1))
-                    log "Atlas is running though, so will let it start PoGo instead!"
+                    log "PoGo is not running, but Atlas is. If this happens again during 5 minutes will restart! ($count)"
                 fi
-                if [ $count -ge 5 ]; then
-                    log "Atlas is running but pogo wasn't for 5 times, restarting everything!"
+                if [ $count -gt 5 ]; then
+                    log "Happened five times. Restarting everything!"
                     count=0
                     force_restart
-                    continue
                 fi
+            else
+                count=0
             fi
 
             if ! pidof adbd; then
