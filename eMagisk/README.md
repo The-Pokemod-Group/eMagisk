@@ -1,8 +1,22 @@
 # eMagisk
 
-Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optionally installs ATV resources.
+Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optionally installs Atlas services that ensure uptime.
 
+-----
+## THIS IS A WIP
+### TODOs
+- Cleanup ATVServices.sh into separate files
+- Add checks for RDM
+- Add more performance optimization system props and tweaks
+- Remove obsolete things
+- And several others
+
+----
 ## Changelog
+### 9.3.2
+- Completely refactored since last changelog. Targets ensuring Atlas stays online and has several health checks.
+- Installation requires no manual intervention, but allows skipping the Atlas specific services with volume buttons.
+- This version is the current most stable one, and works very well at ensuring Atlas errors are dealth with and ATVs don't stop scanning.
 
 ### 5.4
 - Everything seems to be verkin.

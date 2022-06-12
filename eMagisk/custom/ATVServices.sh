@@ -20,52 +20,52 @@ download() {
     done
 }
 
-checkUpdates() {
-    while :; do
-        log "Checking for updates..."
+# checkUpdates() {
+#     while :; do
+#         log "Checking for updates..."
 
-        until ping -c1 8.8.8.8 >/dev/null 2>/dev/null; do
-            sleep 10s
-        done
+#         until ping -c1 8.8.8.8 >/dev/null 2>/dev/null; do
+#             sleep 10s
+#         done
 
-        currentVersion=$(cat "$MODDIR/version_lock")
-        remoteVersion=$(wget http://storage.googleapis.com/pokemod/Atlas/version -O-)
-        if [ ."$remoteVersion" != "." ] && [ "$remoteVersion" -gt "$currentVersion" ]; then
-            log "There's a new version of eMagisk!"
-            log "Updating from $currentVersion to $remoteVersion"
+#         currentVersion=$(cat "$MODDIR/version_lock")
+#         remoteVersion=$(wget http://storage.googleapis.com/pokemod/Atlas/version -O-)
+#         if [ ."$remoteVersion" != "." ] && [ "$remoteVersion" -gt "$currentVersion" ]; then
+#             log "There's a new version of eMagisk!"
+#             log "Updating from $currentVersion to $remoteVersion"
 
-            download "http://storage.googleapis.com/pokemod/Atlas/3-eMagisk.zip" "<SDCARD>/eMagisk.zip"
-            if [ -e "<SDCARD>/eMagisk.zip" ]; then
-                log "Downloaded new version, rebooting to recovery and installing..."
-                rm -rf "<SDCARD>/TWRP"
-                mkdir -p /cache/recovery
-                touch /cache/recovery/command
-                echo '--update_package=<SDCARD>/eMagisk.zip' >>/cache/recovery/command
-                echo '--wipe_cache' >>/cache/recovery/command
-                sleep 10s
-                reboot recovery
-            else
-                log "Something wrong happened and the file couldn't be downloaded!"
-            fi
-        elif [ ."$currentVersion" = ."$remoteVersion" ]; then
-            log "eMagisk is up to date! Current version is $currentVersion"
-        elif [ ."$remoteVersion" = "." ]; then
-            log "Couldn't check for update, something wrong with the server :/"
-            log "currentVersion: $currentVersion | remoteVersion: $remoteVersion"
-        else
-            log "Some error happened!"
-            log "currentVersion: $currentVersion | remoteVersion: $remoteVersion"
-        fi
+#             download "http://storage.googleapis.com/pokemod/Atlas/3-eMagisk.zip" "<SDCARD>/eMagisk.zip"
+#             if [ -e "<SDCARD>/eMagisk.zip" ]; then
+#                 log "Downloaded new version, rebooting to recovery and installing..."
+#                 rm -rf "<SDCARD>/TWRP"
+#                 mkdir -p /cache/recovery
+#                 touch /cache/recovery/command
+#                 echo '--update_package=<SDCARD>/eMagisk.zip' >>/cache/recovery/command
+#                 echo '--wipe_cache' >>/cache/recovery/command
+#                 sleep 10s
+#                 reboot recovery
+#             else
+#                 log "Something wrong happened and the file couldn't be downloaded!"
+#             fi
+#         elif [ ."$currentVersion" = ."$remoteVersion" ]; then
+#             log "eMagisk is up to date! Current version is $currentVersion"
+#         elif [ ."$remoteVersion" = "." ]; then
+#             log "Couldn't check for update, something wrong with the server :/"
+#             log "currentVersion: $currentVersion | remoteVersion: $remoteVersion"
+#         else
+#             log "Some error happened!"
+#             log "currentVersion: $currentVersion | remoteVersion: $remoteVersion"
+#         fi
 
-        # WIP Pogo
-        # currentVersion="$(dumpsys package $POGOPKG|awk -F'=' '/versionName/{print $2}')"
-        # remoteVersion=$(wget http://storage.googleapis.com/pokemod/Atlas/version -O-)
+#         # WIP Pogo
+#         # currentVersion="$(dumpsys package $POGOPKG|awk -F'=' '/versionName/{print $2}')"
+#         # remoteVersion=$(wget http://storage.googleapis.com/pokemod/Atlas/version -O-)
 
-        # TODO: Atlas
+#         # TODO: Atlas
 
-        sleep 1h
-    done
-}
+#         sleep 1h
+#     done
+# }
 
 # checkUpdates &
 
