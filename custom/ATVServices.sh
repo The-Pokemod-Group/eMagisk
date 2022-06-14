@@ -11,12 +11,9 @@ force_restart() {
     am stopservice $ATLASPKG/com.pokemod.atlas.services.MappingService
     am force-stop $POGOPKG & pm clear $POGOPKG
     am force-stop $ATLASPKG & pm clear $ATLASPKG
-    
-    # Only enable the line below IF you don't have Atlas set to start on boot (check slider in app or atlas_config.json)
-
     sleep 5
     am startservice $ATLASPKG/com.pokemod.atlas.services.MappingService
-    log "Services were restarted"
+    log "Services were restarted!"
 }
 
 # Wipe out packages we don't need in our ATV
@@ -114,6 +111,7 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
 
         log "eMagisk v$(cat "$MODDIR/version_lock"). Starting health check service..."
         while :; do
+            sleep $((240+$RANDOM%10))
             log "Started health check!"
             atlasDeviceName=$(cat /data/local/tmp/atlas_config.json | awk -F\" '{print $12}')
 	        rdmDeviceInfo=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true"  | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
@@ -149,7 +147,6 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
 	    fi
 
         log "Scheduling next check in 4 minutes..."
-        sleep $((240+$RANDOM%10))
         done
     ) &
 else
