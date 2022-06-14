@@ -16,6 +16,7 @@ force_restart() {
 
     #sleep 5
     #am startservice $ATLASPKG/com.pokemod.atlas.services.MappingService
+    log "Services were restarted"
 }
 
 # Wipe out packages we don't need in our ATV
