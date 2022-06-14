@@ -14,7 +14,7 @@ force_restart() {
     
     # Only enable the line below IF you don't have Atlas set to start on boot (check slider in app or atlas_config.json)
 
-    #sleep 5
+    sleep 5
     am startservice $ATLASPKG/com.pokemod.atlas.services.MappingService
     log "Services were restarted"
 }
