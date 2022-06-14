@@ -22,6 +22,9 @@ Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optiona
 
 Refactored check if alive logic to be RDM based instead of PID. WIP
 
+For this version, it is required for you to add your basic RDM info in the emagisk.config file which has to be located inside the
+/sdcard/Download/ folder. A sample emagisk.config is provided in the repo.
+
 ### 9.3.2
 
 - Completely refactored since last changelog. Targets ensuring Atlas stays online and has several health checks.
