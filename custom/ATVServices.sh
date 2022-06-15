@@ -109,9 +109,17 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
             exit 1
         fi
 
-        log "eMagisk v$(cat "$MODDIR/version_lock"). Starting health check service..."
+        log "eMagisk v$(cat "$MODDIR/version_lock"). Starting health check service in 4 minutes..."
+        counter=0
+        log "Start counter at $counter"
         while :; do
             sleep $((240+$RANDOM%10))
+            
+            if [[ $counter -gt 3 ]];then
+            log "Critical restart threshold of $counter reached. Rebooting device..."
+            reboot
+            fi
+
             log "Started health check!"
             atlasDeviceName=$(cat /data/local/tmp/atlas_config.json | awk -F\" '{print $12}')
 	        rdmDeviceInfo=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true"  | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
@@ -139,11 +147,15 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
 	        then
 		    log "Last seen at RDM is greater than 5 minutes -> Atlas Service will be restarting..."
 		    force_restart
-	    elif [[ $calcTimeDiff -le 5 ]]
+            counter=$((counter+1))
+            log "Counter is now set at $counter. device will be rebooted if counter exceeds 3 failed restarts."
+	    elif [[ $calcTimeDiff -le 10 ]]
 	        then
 		    log "Our device is live!"
+            counter=0
 	    else
 		    log "Last seen time is a bit off. Will check again later."
+            counter=0
 	    fi
 
         log "Scheduling next check in 4 minutes..."
