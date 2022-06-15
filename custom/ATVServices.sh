@@ -101,7 +101,7 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
         
         log "Trying to pull info from emagisk.config..."
         if [[ -f $CONFIGFILE ]]; then
-            source /sdcard/Download/emagisk.config
+            source $CONFIGFILE
             export rdm_user rdm_password rdm_backendURL
             log "Pulled the info successfully."
         else
