@@ -118,6 +118,8 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
             if [[ $counter -gt 3 ]];then
             log "Critical restart threshold of $counter reached. Rebooting device..."
             reboot
+            # We need to wait for the reboot to actually happen or the process might be interrupted
+            sleep 60 
             fi
 
             log "Started health check!"
