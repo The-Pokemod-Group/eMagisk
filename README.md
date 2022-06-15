@@ -9,7 +9,6 @@ Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optiona
 ### TODOs
 
 - Cleanup ATVServices.sh into separate files
-- Add checks for RDM
 - Add more performance optimization system props and tweaks
 - Remove obsolete things
 - And several others
@@ -17,6 +16,12 @@ Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optiona
 ---
 
 ## Changelog
+
+### 9.3.6
+
+Added reboot logic into the check loop. Now the deamon will force a device reboot after 4 failed attempts at restarting Atlas services. Everything is RDM based. emagisk.config is mandatory.
+
+Cleaned up obsolete functions.
 
 ### 9.3.3
 
