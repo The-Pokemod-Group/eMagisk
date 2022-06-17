@@ -524,7 +524,7 @@ function _set_prompt() {
 
     # Strip ANSI commands before counting length
     # From: https://www.commandlinefu.com/commands/view/12043/remove-color-special-escape-ansi-codes-from-text-with-sed
-    PS1RHS_stripped=$(sed "s,\x1B\[[0-9;]*[a-zA-Z],,g" <<<"$PS1RHS")
+    PS1RHS_stripped=$(echo "$PS1RHS" | sed -e "s,\x1B\[[0-9;]*[a-zA-Z],,g")
 
     # Reference: https://en.wikipedia.org/wiki/ANSI_escape_code
     local Save='\e[s' # Save cursor position
@@ -538,7 +538,7 @@ function _set_prompt() {
     # printed characters so that the prompt doesn't do strange things when
     # editing the entered text.
 
-    PS1="\[${Save}\\n\e[${COLUMNS:-$(tput cols)}C\e[${#PS1RHS_stripped}D${PS1RHS}${Rest}\]${PS1}"
+    PS1="\[${Save}\\n\e[${COLUMNS}C\e[${#PS1RHS_stripped}D${PS1RHS}${Rest}\]${PS1}"
 
     # Changes the terminal window title to the current dir by default, truncating if too long.
     PS1="\033]0;$(_get_truncated_pwd)\007${PS1}"
@@ -548,16 +548,3 @@ function _set_prompt() {
 }
 
 PROMPT_COMMAND='_set_prompt'
-
-
-
-
-
-
-
-
-
-
-
-
-
