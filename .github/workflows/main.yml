@@ -1,21 +1,16 @@
-# This is a basic workflow to help you get started with Actions
+name: "pre-release"
 
-name: "release"
-
-# Controls when the workflow will run
 on:
   push:
-    branches: [ "master" ]
-    tags:
-      - "latest"
-  # Allows you to run this workflow manually from the Actions tab
+    branches:
+      - "master"
   workflow_dispatch:
 
 jobs:
-  build:
+  pre-release:
+    name: "Pre Release"
     runs-on: ubuntu-latest
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
       - name: "Build"
         run: |
@@ -23,5 +18,7 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
           files: |
             *.zip
