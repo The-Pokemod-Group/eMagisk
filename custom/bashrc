@@ -122,6 +122,11 @@ if [ -f /sdcard/.bash-completion/bash_completion ]; then
     . /sdcard/.bash-completion/bash_completion 2>/dev/null
 fi
 
+## True screen clearing
+function clear() {
+    echo -en "\033c"
+}
+
 ##  +-+-+-+-+-+-+-+-+-+-+-+-+-+
 ##  |s|e|l|e|c|t|_|o|p|t|i|o|n|
 ##  +-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -543,3 +548,16 @@ function _set_prompt() {
 }
 
 PROMPT_COMMAND='_set_prompt'
+
+
+
+
+
+
+
+
+
+
+
+
+
