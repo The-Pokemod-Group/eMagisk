@@ -26,6 +26,6 @@ done
 unset p
 
 export HOME="<SDCARD>"
-<BIN>/bash --rcfile <SDCARD>/.bashrc
+exec <BIN>/bash --rcfile <SDCARD>/.bashrc
 
 : place customizations above this line
