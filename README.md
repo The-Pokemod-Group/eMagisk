@@ -8,13 +8,11 @@ Installs useful binaries: bash, curl, nano, strace, eventrec and tcpdump. Also o
 
 This fork is even more WIP than emi's. This fork focuses on using RDM as the device's heartbeat so to speak. Instead of checking directly for atlas process health status, it indirectly checks for it by checking RDM last seen time.
 
-If last seen time is < 5 seconds, the device is considered live and healthy. If the last seen time is greater than 5 seconds but less than 5 minutes, a warning is recorded but no action is taken.
+If last seen time is < 10 seconds, the device is considered live and healthy. If the last seen time is greater than 10 seconds but less than 5 minutes, a warning is recorded but no action is taken.
 
-Once the the time diff between RDM and the device is >= 5 minutes, this daemon will force restart all atlas services while killing pokemon go (atlas is responsible to spawn it again).
+Once the the time diff between RDM and the device is >= 5 minutes, this daemon will force restart all atlas services while killing pokemon go (atlas is responsible to spawn it again). On X96 Mini and X96W Tvs, the status LED will turn RED to indicate a possible fault. The LED will turn BLUE once the daemon detects the device is live again on RDM.
 
 If the above procedures fails 4 times in a row (16 minutes total) then the device is considered unrecoverable and a full reboot is triggered.
-
----
 
 ---
 
@@ -32,6 +30,10 @@ If you really want to install this version, you have to:
 Note: step 5 only works on Magisk versions 20.4 and forward. If you have an earlier Magisk version, install through Magisk Manager (scrcpy into the device) or update your Magisk.
 
 ## Changelog
+
+### 9.3.9
+
+Added LED status indicator for the X96 Mini and X96W. It might work with other ATVs that have a LED status indicator and led control is located under `/sys/class/leds/led-sys`
 
 ### 9.3.8
 
