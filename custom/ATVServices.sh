@@ -7,6 +7,8 @@ POGOPKG=com.nianticlabs.pokemongo
 UNINSTALLPKGS="com.ionitech.airscreen cm.aptoidetv.pt com.netflix.mediaclient org.xbmc.kodi com.google.android.youtube.tv"
 CONFIGFILE='/data/local/tmp/emagisk.config'
 
+# Stops Atlas and Pogo and restarts Atlas MappingService
+
 force_restart() {
     am stopservice $ATLASPKG/com.pokemod.atlas.services.MappingService
     am force-stop $POGOPKG & pm clear $POGOPKG
@@ -14,6 +16,45 @@ force_restart() {
     sleep 5
     am startservice $ATLASPKG/com.pokemod.atlas.services.MappingService
     log "Services were restarted!"
+}
+
+# Recheck if $CONFIGFILE exists and has data. Repulls data and checks the RDM connection status.
+
+configfile_rdm() {
+    if [[ -s $CONFIGFILE ]]; then
+        log "$CONFIGFILE exists and has data. Data will be pulled."
+        source $CONFIGFILE
+        export rdm_user rdm_password rdm_backendURL
+    else
+        log "Failed to pull the info. Make sure $($CONFIGFILE) exists and has the correct data."
+    fi
+
+    # RDM connection check
+
+    rdmConnect=$(curl -i -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true" | awk -F\/ '{print $2}' | awk -F" " '{print $3}' | sed -n '1p')
+    if [[ $rdmConnect = "OK" ]]; then
+        log "RDM connection status: $rdmConnect"
+        log "RDM Connection was successful!"
+    elif [[ $rdmConnect = "Unauthorized" ]]; then
+        log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
+        log "Check your $CONFIGFILE values, credentials and rdm_user permissions!"
+        sleep $((240+$RANDOM%10))
+    elif [[ -z $rdmConnect ]]; then
+        log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
+        log "Check your ATV internet connection!"
+        counter=$((counter+1))
+        if [[ $counter -gt 4 ]];then
+            log "Critical restart threshold of $counter reached. Rebooting device..."
+            reboot
+            # We need to wait for the reboot to actually happen or the process might be interrupted
+            sleep 60 
+        fi
+        sleep $((240+$RANDOM%10))
+    else
+        log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
+        log "Something different went wrong..."
+        sleep $((240+$RANDOM%10))
+    fi
 }
 
 # This is for the X96 Mini and X96W Atvs. Can be adapted to other ATVs that have a led status indicator
@@ -108,23 +149,14 @@ fi
 
 if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
     (
-        
-        log "Trying to pull info from emagisk.config..."
-        if [[ -f $CONFIGFILE ]]; then
-            source $CONFIGFILE
-            export rdm_user rdm_password rdm_backendURL
-            log "Pulled the info successfully."
-        else
-            log "Failed to pull the info. Make sure $($CONFIGFILE) exists and is correctly formated. Killing service"
-            exit 1
-        fi
-
         log "eMagisk v$(cat "$MODDIR/version_lock"). Starting health check service in 4 minutes..."
         counter=0
+        rdmDeviceID=1
         log "Start counter at $counter"
         while :; do
             sleep $((240+$RANDOM%10))
-            
+            configfile_rdm        
+
             if [[ $counter -gt 3 ]];then
             log "Critical restart threshold of $counter reached. Rebooting device..."
             reboot
@@ -137,43 +169,44 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
 	        rdmDeviceInfo=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true"  | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
             rdmDeviceName=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
 	
-	    until [[ $rdmDeviceName = $atlasDeviceName ]]
-	    do
-		    $((rdmDeviceID++))
-		    rdmDeviceInfo=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
-		    rdmDeviceName=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
+	        until [[ $rdmDeviceName = $atlasDeviceName ]]
+	        do
+		        $((rdmDeviceID++))
+		        rdmDeviceInfo=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
+		        rdmDeviceName=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
 		
-		    if [[ -z $rdmDeviceInfo ]]
-		        then
-			    rdmDeviceID=1
-			    rdmDeviceName=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
-		    fi	
-	    done
+		        if [[ -z $rdmDeviceInfo ]]; then
+                    log "Probably reached end of device list or encountered a different issue!"
+                    log "Set RDM Device ID to 1, recheck RDM connection and repull $CONFIGFILE"
+			        rdmDeviceID=1
+                    #repull rdm values + recheck rdm connection
+                    configfile_rdm
+			        rdmDeviceName=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
+		        fi	
+	        done
 	
-	    log "Found our device! Checking for timestamps..."
-	    rdmDeviceLastseen=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Flast_seen\"\:\{\" '{print $2}' | awk -Ftimestamp\"\: '{print $2}' | awk -F\, '{print $1}' | sed 's/}//g')
-	    now="$(date +'%s')"
-	    calcTimeDiff=$(($now - $rdmDeviceLastseen))
+	        log "Found our device! Checking for timestamps..."
+	        rdmDeviceLastseen=$(curl -s -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Flast_seen\"\:\{\" '{print $2}' | awk -Ftimestamp\"\: '{print $2}' | awk -F\, '{print $1}' | sed 's/}//g')
+	        now="$(date +'%s')"
+	        calcTimeDiff=$(($now - $rdmDeviceLastseen))
 	
-	    if [[ $calcTimeDiff -gt 300 ]]
-	        then
-		    log "Last seen at RDM is greater than 5 minutes -> Atlas Service will be restarting..."
-		    force_restart
-            led_red
-            counter=$((counter+1))
-            log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
-	    elif [[ $calcTimeDiff -le 10 ]]
-	        then
-		    log "Our device is live!"
-            counter=0
-            led_blue
-	    else
-		    log "Last seen time is a bit off. Will check again later."
-            counter=0
-            led_blue
-	    fi
+	        if [[ $calcTimeDiff -gt 300 ]]; then
+		        log "Last seen at RDM is greater than 5 minutes -> Atlas Service will be restarting..."
+		        force_restart
+                led_red
+                counter=$((counter+1))
+                log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
+	        elif [[ $calcTimeDiff -le 10 ]]; then
+		        log "Our device is live!"
+                counter=0
+                led_blue
+	        else
+		        log "Last seen time is a bit off. Will check again later."
+                counter=0
+                led_blue
+	        fi
 
-        log "Scheduling next check in 4 minutes..."
+            log "Scheduling next check in 4 minutes..."
         done
     ) &
 else
