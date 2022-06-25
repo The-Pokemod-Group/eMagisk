@@ -20,12 +20,10 @@ If the above procedures fails 4 times in a row (16 minutes total) then the devic
 
 If you really want to install this version, you have to:
 
-1. clone the repo (git clone https://github.com/tchavei/eMagisk.git)
-2. modify the ATVServices.sh where you need to replace `ATLASPKG=com.pokemod.atlas.beta` with `ATLASPKG=com.pokemod.atlas`
-3. run `./build`
-4. adb push the resulting magisk module into the device
-5. `magisk --install-module newmagiskmodule.zip`
-6. `reboot`
+1. Download the latest release (check tags)
+2. adb push the magisk module into the device
+3. `magisk --install-module magiskmodule.zip`
+4. `reboot`
 
 Note: step 5 only works on Magisk versions 20.4 and forward. If you have an earlier Magisk version, install through Magisk Manager (scrcpy into the device) or update your Magisk.
 
