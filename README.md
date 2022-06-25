@@ -23,9 +23,11 @@ If you really want to install this version, you have to:
 1. Download the latest release (check tags)
 2. adb push the magisk module into the device
 3. `magisk --install-module magiskmodule.zip`
-4. `reboot`
+4. copy `emagisk.config` from `https://github.com/tchavei/eMagisk/blob/master/emagisk.config` into `/data/local/tmp` of your device
+5. **Edit the file to match your RDM username, password and server IP:PORT**
+6. `reboot`
 
-Note: step 5 only works on Magisk versions 20.4 and forward. If you have an earlier Magisk version, install through Magisk Manager (scrcpy into the device) or update your Magisk.
+Note: step 3 only works on Magisk versions 20.4 and forward. If you have an earlier Magisk version, install through Magisk Manager (scrcpy into the device) or update your Magisk.
 
 ## Changelog
 
