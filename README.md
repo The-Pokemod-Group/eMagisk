@@ -31,6 +31,10 @@ Note: step 5 only works on Magisk versions 20.4 and forward. If you have an earl
 
 ## Changelog
 
+### 9.4.0
+
+Added several extra RDM and Internet checks (Bubble) and beta vs production environment check
+
 ### 9.3.9
 
 Added LED status indicator for the X96 Mini and X96W. It might work with other ATVs that have a LED status indicator and led control is located under `/sys/class/leds/led-sys`

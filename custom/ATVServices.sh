@@ -2,10 +2,24 @@
 
 # Base stuff we need
 
-ATLASPKG=com.pokemod.atlas.beta
 POGOPKG=com.nianticlabs.pokemongo
 UNINSTALLPKGS="com.ionitech.airscreen cm.aptoidetv.pt com.netflix.mediaclient org.xbmc.kodi com.google.android.youtube.tv"
 CONFIGFILE='/data/local/tmp/emagisk.config'
+
+# Check if this is a beta or production device
+
+check_beta() {    
+    if [ "$(pm list packages com.pokemod.atlas.beta)" = "package:com.pokemod.atlas.beta" ]; then
+        log "Found Atlas developer version!"
+        ATLASPKG=com.pokemod.atlas.beta
+    elif [ "$(pm list packages com.pokemod.atlas)" = "package:com.pokemod.atlas" ]; then
+        log "Found Atlas production version!"
+        ATLASPKG=com.pokemod.atlas
+    else
+        log "No Atlas installed. Abort!"
+        exit 1
+    fi
+}
 
 # Stops Atlas and Pogo and restarts Atlas MappingService
 
@@ -66,6 +80,10 @@ led_red(){
 led_blue(){
     echo 1 > /sys/class/leds/led-sys/brightness
 }
+
+# Adjust the script depending on Atlas production or beta
+
+check_beta
 
 # Wipe out packages we don't need in our ATV
 
@@ -144,6 +162,7 @@ if [ "$(settings get global stay_on_while_plugged_in)" != 3 ]; then
     log "Setting Stay On While Plugged In"
     settings put global stay_on_while_plugged_in 3
 fi
+
 
 # Health Service by Emi and Bubble with a little root touch
 
