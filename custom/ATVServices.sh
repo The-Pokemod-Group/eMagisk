@@ -2,7 +2,7 @@
 
 # Base stuff we need
 
-ATLASPKG=com.pokemod.atlas.beta
+ATLASPKG=com.pokemod.atlas
 POGOPKG=com.nianticlabs.pokemongo
 UNINSTALLPKGS="com.ionitech.airscreen cm.aptoidetv.pt com.netflix.mediaclient org.xbmc.kodi com.google.android.youtube.tv"
 CONFIGFILE='/data/local/tmp/emagisk.config'
