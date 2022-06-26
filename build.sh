@@ -10,8 +10,8 @@ if [[ $1 == 'github' ]]; then
     newVerCode="$ver"
 else
     newVerCode=$((ver + 1))
-    newVersion=$(echo $newVerCode | \sed 's|\(.\)\(.\)\(.\)|\1\.\2\.\3|')
 fi
+newVersion=$(echo $newVerCode | \sed 's|\(.\)\(.\)\(.\)|\1\.\2\.\3|')
 
 sed --in-place "s|^versionCode=$ver|versionCode=$newVerCode|;s|^version=v.*|version=v$newVersion|" module.prop
 zip -r "$name-$newVersion".zip . -x ".git/*" "LICENSE" "build.sh" ".gitignore" "*.zip"
