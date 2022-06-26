@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 OLDPWD="$PWD"
 DIRNAME=$(dirname "$0")
 
@@ -6,7 +6,7 @@ cd "$DIRNAME"
 
 ver=$(sed -n "s|^versionCode=||p" module.prop)
 name=$(sed -n "s|^name=||p" module.prop | sed "s| |-|g")
-if [[ $1 == 'github' ]]; then
+if [ .$1 == .github ]; then
     newVerCode="$ver"
 else
     newVerCode=$((ver + 1))
