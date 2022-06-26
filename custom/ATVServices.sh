@@ -21,6 +21,16 @@ check_beta() {
     fi
 }
 
+# This is for the X96 Mini and X96W Atvs. Can be adapted to other ATVs that have a led status indicator
+
+led_red(){
+    echo 0 > /sys/class/leds/led-sys/brightness
+}
+
+led_blue(){
+    echo 1 > /sys/class/leds/led-sys/brightness
+}
+
 # Stops Atlas and Pogo and restarts Atlas MappingService
 
 force_restart() {
@@ -49,13 +59,16 @@ configfile_rdm() {
     if [[ $rdmConnect = "OK" ]]; then
         log "RDM connection status: $rdmConnect"
         log "RDM Connection was successful!"
+        led_blue
     elif [[ $rdmConnect = "Unauthorized" ]]; then
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
         log "Check your $CONFIGFILE values, credentials and rdm_user permissions!"
+        led_red
         sleep $((240+$RANDOM%10))
     elif [[ -z $rdmConnect ]]; then
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
         log "Check your ATV internet connection!"
+        led_red
         counter=$((counter+1))
         if [[ $counter -gt 4 ]];then
             log "Critical restart threshold of $counter reached. Rebooting device..."
@@ -67,18 +80,9 @@ configfile_rdm() {
     else
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
         log "Something different went wrong..."
+        led_red
         sleep $((240+$RANDOM%10))
     fi
-}
-
-# This is for the X96 Mini and X96W Atvs. Can be adapted to other ATVs that have a led status indicator
-
-led_red(){
-    echo 0 > /sys/class/leds/led-sys/brightness
-}
-
-led_blue(){
-    echo 1 > /sys/class/leds/led-sys/brightness
 }
 
 # Adjust the script depending on Atlas production or beta
