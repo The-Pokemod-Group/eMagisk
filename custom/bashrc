@@ -138,7 +138,7 @@ if [ -f /sdcard/.bash-completion/bash_completion ]; then
 fi
 
 ## True screen clearing
-function clear() {
+function _clear() {
     echo -en "\033c"
 }
 

@@ -4,7 +4,7 @@
 #-
 # Minimal /system/etc/mkshrc for Android
 
-: ${TERM:=xterm-256color} ${HOME:=<SDCARD>} ${MKSH:=<BIN>/bash} ${HOSTNAME:=android}
+: ${TERM:=xterm-256color} ${HOME=<SDCARD>} ${MKSH:=<BIN>/bash} ${HOSTNAME:=android}
 : ${SHELL:=$MKSH} ${USER=$(getprop ro.product.device)}
 
 if [ -d "/sbin/.magisk/busybox" ]; then
@@ -16,4 +16,4 @@ fi
 PATH=$BBDIR:$PATH:/sbin
 export TERM HOME MKSH HOSTNAME SHELL USER PATH
 
-exec <BIN>/bash --rcfile <SDCARD>/.bashrc
+exec env HOME=<SDCARD> <BIN>/bash --rcfile <SDCARD>/.bashrc
