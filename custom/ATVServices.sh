@@ -55,12 +55,12 @@ configfile_rdm() {
 
     # RDM connection check
 
-    rdmConnect=$(curl -i -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true" | awk -F\/ '{print $2}' | awk -F" " '{print $3}' | sed -n '1p')
-    if [[ $rdmConnect = "OK" ]]; then
+    rdmConnect=$(curl -s -k -o /dev/null -w "%{http_code}" -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true")
+    if [[ $rdmConnect = "200" ]]; then
         log "RDM connection status: $rdmConnect"
         log "RDM Connection was successful!"
         led_blue
-    elif [[ $rdmConnect = "Unauthorized" ]]; then
+    elif [[ $rdmConnect = "401" ]]; then
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
         log "Check your $CONFIGFILE values, credentials and rdm_user permissions!"
         led_red
