@@ -31,6 +31,10 @@ Note: step 3 only works on Magisk versions 21.2 and forward. If you have an earl
 
 ## Changelog
 
+### 9.4.2
+
+Removed clearing data from pogo and atlas on restart as it's not needed and can break things
+
 ### 9.4.0
 
 Added several extra RDM and Internet checks (Bubble) and beta vs production environment check
