@@ -35,8 +35,8 @@ led_blue(){
 
 force_restart() {
     am stopservice $ATLASPKG/com.pokemod.atlas.services.MappingService
-    am force-stop $POGOPKG & pm clear $POGOPKG
-    am force-stop $ATLASPKG & pm clear $ATLASPKG
+    am force-stop $POGOPKG
+    am force-stop $ATLASPKG
     sleep 5
     am startservice $ATLASPKG/com.pokemod.atlas.services.MappingService
     log "Services were restarted!"
