@@ -210,25 +210,28 @@ if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
 	
 	        log "Found our device! Checking for timestamps..."
 	        rdmDeviceLastseen=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Flast_seen\"\:\{\" '{print $2}' | awk -Ftimestamp\"\: '{print $2}' | awk -F\, '{print $1}' | sed 's/}//g')
-	        now="$(date +'%s')"
-	        calcTimeDiff=$(($now - $rdmDeviceLastseen))
+		if [[ -z $rdmDeviceLastseen ]]; then
+			log "The device last seen status is empty!"
+		else
+	        	now="$(date +'%s')"
+	        	calcTimeDiff=$(($now - $rdmDeviceLastseen))
 	
-	        if [[ $calcTimeDiff -gt 300 ]]; then
-		        log "Last seen at RDM is greater than 5 minutes -> Atlas Service will be restarting..."
-		        force_restart
-                led_red
-                counter=$((counter+1))
-                log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
-	        elif [[ $calcTimeDiff -le 10 ]]; then
-		        log "Our device is live!"
-                counter=0
-                led_blue
-	        else
-		        log "Last seen time is a bit off. Will check again later."
-                counter=0
-                led_blue
-	        fi
-
+	        	if [[ $calcTimeDiff -gt 300 ]]; then
+		        	log "Last seen at RDM is greater than 5 minutes -> Atlas Service will be restarting..."
+		        	force_restart
+                		led_red
+                		counter=$((counter+1))
+                		log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
+	        	elif [[ $calcTimeDiff -le 10 ]]; then
+		        	log "Our device is live!"
+                		counter=0
+                		led_blue
+	        	else
+		        	log "Last seen time is a bit off. Will check again later."
+                	counter=0
+                	led_blue
+	        	fi
+		fi
             log "Scheduling next check in 4 minutes..."
         done
     ) &
