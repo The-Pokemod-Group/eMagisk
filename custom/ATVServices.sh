@@ -65,7 +65,7 @@ configfile_rdm() {
         log "Check your $CONFIGFILE values, credentials and rdm_user permissions!"
         led_red
         sleep $((240+$RANDOM%10))
-    elif [[ $rdmConnect = "Internal" ]]; then
+    elif [[ $rdmConnect = "500" ]]; then
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
         log "The RDM Server couldn't response properly to eMagisk!"
         led_red
