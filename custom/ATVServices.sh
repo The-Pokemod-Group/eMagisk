@@ -76,12 +76,10 @@ echo "$UNINSTALLPKGS" | tr ' ' '\n' | while read -r item; do
     fi
 done
 
-# log "Enabling Play Store"
-# pm disable com.android.vending
-# TODO:
-if [ "$(pm list packages -e com.android.vending)" = "package:com.android.vending" ]; then
-    log "Disabling Play Store"
-    pm disable-user com.android.vending
+# Enable playstore
+if [ "$(pm list packages -d com.android.vending)" = "package:com.android.vending" ]; then
+    log "Enabling Play Store"
+    pm enable com.android.vending
 fi
 
 if ! magiskhide status; then
