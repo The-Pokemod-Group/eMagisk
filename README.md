@@ -3,7 +3,6 @@
 Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optionally installs Atlas services that ensure uptime.
 
 -----
-## THIS IS A WIP
 ### TODOs
 - Cleanup ATVServices.sh into separate files
 - Add checks for RDM
@@ -13,6 +12,9 @@ Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optiona
 
 ----
 ## Changelog
+### 9.5.0
+- Enables Play Store again as Safety Net is being dropped by Play Integrity, the latter requiring an enabled and updated Play Store.
+
 ### 9.3.2
 - Completely refactored since last changelog. Targets ensuring Atlas stays online and has several health checks.
 - Installation requires no manual intervention, but allows skipping the Atlas specific services with volume buttons.
