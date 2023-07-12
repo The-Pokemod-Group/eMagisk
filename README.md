@@ -31,6 +31,14 @@ Note: step 3 only works on Magisk versions 21.2 and forward. If you have an earl
 
 ## Changelog
 
+### 9.4.4
+
+Commented a code block to reset eth0 network interface on RDM '0000' replies. Seems to affect some X96 Mini devices using MADROM
+
+### 9.4.3
+
+Due to the need to validade Google's Play Integrity, eMagisk will now forcefully enable the Playstore if it's disabled.
+
 ### 9.4.2
 
 Removed clearing data from pogo and atlas on restart as it's not needed and can break things

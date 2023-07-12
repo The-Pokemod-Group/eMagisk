@@ -60,15 +60,20 @@ configfile_rdm() {
         log "RDM connection status: $rdmConnect"
         log "RDM Connection was successful!"
         led_blue
-    elif [[ $rdmConnect = "000" ]]; then
-        log "RDM connection status: $rdmConnect"
-        log "The device network interface seems to have an issue! eMagisk will restart the network interface eth0 soon."
-        led_red
-        ifconfig eth0 down
-        sleep $((30+$RANDOM%10))
-        ifconfig eth0 up
-        log "Network interface eth0 was restarted -> Recheck in 4 minutes"
-        sleep $((240+$RANDOM%10))  
+    
+    # Uncomment this if your devices have network interface issues on eth0 to reset the connection
+    # This is only needed on some H313 and H616 devices.
+    
+    #elif [[ $rdmConnect = "000" ]]; then
+    #    log "RDM connection status: $rdmConnect"
+    #    log "The device network interface seems to have an issue! eMagisk will restart the network interface eth0 soon."
+    #    led_red
+    #    ifconfig eth0 down
+    #    sleep $((30+$RANDOM%10))
+    #    ifconfig eth0 up
+    #    log "Network interface eth0 was restarted -> Recheck in 4 minutes"
+    #    sleep $((240+$RANDOM%10))  
+
     elif [[ $rdmConnect = "401" ]]; then
         log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
         log "Check your $CONFIGFILE values, credentials and rdm_user permissions!"
