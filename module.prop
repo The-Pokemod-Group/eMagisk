@@ -1,7 +1,7 @@
 id=emagisk
 name=eMagisk
-version=v9.5.0
-versionCode=950
+version=v9.6.0
+versionCode=960
 author=emi
-description=Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optionally installs ATV resources.
+description=Installs useful binaries: bash, curl, nano, strace, eventrec and tcpdump. Also optionally installs ATV resources.
 minMagisk=20000
