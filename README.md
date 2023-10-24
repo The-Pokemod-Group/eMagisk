@@ -1,6 +1,6 @@
 # eMagisk
 
-Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optionally installs Atlas services that ensure uptime.
+Installs useful binaries: bash, curl, nano, strace, eventrec and tcpdump. Also optionally installs Atlas services that ensure uptime.
 
 -----
 ### TODOs
@@ -8,10 +8,22 @@ Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optiona
 - Add checks for RDM
 - Add more performance optimization system props and tweaks
 - Remove obsolete things
+- Test and add jq binary
+- Log rotation
 - And several others
 
 ----
 ## Changelog
+### 9.6.0
+- Merged the root@tchavei / BubbleT fork into main
+- This update requires to have a new emagisk.config file
+- Added "rdm_check" option to the emagisk.config file
+- This option lets you choose between both Health Monitors
+  - 0 = Atlas Service Health Monitor (checks if the Atlas Mapping Service is running)
+  - 1 = RDM Connection Monitor (checks the lastseen status of the device at RDM and restarts Atlas Service if needed)
+- Uncommented / Enabled the Ethernet Port reset for the RDM Connection Monitor again
+- This update will also add the curl binary since it's needed for the RDM Connection Monitor
+
 ### 9.5.0
 - Enables Play Store again as Safety Net is being dropped by Play Integrity, the latter requiring an enabled and updated Play Store.
 
