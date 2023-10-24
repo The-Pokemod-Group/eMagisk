@@ -1,73 +1,121 @@
 #!/system/bin/sh
-ATLASPKG=com.pokemod.atlas
+
+# Base stuff we need
+
 POGOPKG=com.nianticlabs.pokemongo
 UNINSTALLPKGS="com.ionitech.airscreen cm.aptoidetv.pt com.netflix.mediaclient org.xbmc.kodi com.google.android.youtube.tv"
+CONFIGFILE='/data/local/tmp/emagisk.config'
+
+# Check if this is a beta or production device
+
+check_beta() {    
+    if [ "$(pm list packages com.pokemod.atlas.beta)" = "package:com.pokemod.atlas.beta" ]; then
+        log "Found Atlas developer version!"
+        ATLASPKG=com.pokemod.atlas.beta
+    elif [ "$(pm list packages com.pokemod.atlas)" = "package:com.pokemod.atlas" ]; then
+        log "Found Atlas production version!"
+        ATLASPKG=com.pokemod.atlas
+    else
+        log "No Atlas installed. Abort!"
+        exit 1
+    fi
+}
+
+# This is for the X96 Mini and X96W Atvs. Can be adapted to other ATVs that have a led status indicator
+
+led_red(){
+    echo 0 > /sys/class/leds/led-sys/brightness
+}
+
+led_blue(){
+    echo 1 > /sys/class/leds/led-sys/brightness
+}
+
+# Stops Atlas and Pogo and restarts Atlas MappingService
 
 force_restart() {
     am stopservice $ATLASPKG/com.pokemod.atlas.services.MappingService
-    killall -9 $ATLASPKG
-    killall -9 $POGOPKG
-    monkey -p $ATLASPKG 1
+    am force-stop $POGOPKG
+    am force-stop $ATLASPKG
+    sleep 5
     am startservice $ATLASPKG/com.pokemod.atlas.services.MappingService
-    # monkey -p $POGOPKG 1
+    log "Services were restarted!"
 }
 
-download() {
-    until wget --user-agent="Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6" "$1" -O "$2"; do
-        rm -rf "$2"
-        log "Download of ${1##*/} failed! Trying again..."
-        sleep 10s
-    done
+# Recheck if $CONFIGFILE exists and has data. Repulls data and checks the RDM connection status.
+
+configfile_rdm() {
+    if [[ -s $CONFIGFILE ]]; then
+        log "$CONFIGFILE exists and has data. Data will be pulled."
+        source $CONFIGFILE
+        export rdm_check rdm_user rdm_password rdm_backendURL
+        log "RDM_Check is: $rdm_check"
+    else
+        log "Failed to pull the info. Make sure $($CONFIGFILE) exists and has the correct data."
+    fi
+
+    # RDM connection check
+    if [[ $rdm_check != 1 ]]; then
+        log "RDM_Check is: $rdm_check"
+        log "RDM_Check is off!"
+    else
+        log "RDM_Check is enabled! Will test the connection."
+        rdmConnect=$(curl -s -k -o /dev/null -w "%{http_code}" -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true")
+        if [[ $rdmConnect = "200" ]]; then
+            log "RDM connection status: $rdmConnect"
+            log "RDM Connection was successful!"
+            led_blue
+    
+        # The 000 Check will reset the device Ethernet Port. 
+        # This was needed on some H313 and H616 devices maybe other have this issue too.
+        # Make sure your RDM IP and PORT is correct in the rdm_backendURL in the emagisk.config
+        elif [[ $rdmConnect = "000" ]]; then
+            log "RDM connection status: $rdmConnect"
+            log "The device network interface seems to have an issue! eMagisk will restart the network interface eth0 soon."
+            led_red
+            ifconfig eth0 down
+            sleep $((30+$RANDOM%10))
+            ifconfig eth0 up
+            log "Network interface eth0 was restarted -> Recheck in 4 minutes"
+            log "Also make sure that your RDM URL and PORT is correct in the $CONFIGFILE."
+            sleep $((240+$RANDOM%10))  
+
+        elif [[ $rdmConnect = "401" ]]; then
+            log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
+            log "Check your $CONFIGFILE values, credentials and rdm_user permissions!"
+            led_red
+            sleep $((240+$RANDOM%10))
+        elif [[ $rdmConnect = "500" ]]; then
+            log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
+            log "The RDM Server couldn't response properly to eMagisk!"
+            led_red
+            sleep $((240+$RANDOM%10))
+        elif [[ -z $rdmConnect ]]; then
+            log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
+            log "Check your ATV internet connection!"
+            led_red
+            counter=$((counter+1))
+            if [[ $counter -gt 4 ]];then
+                log "Critical restart threshold of $counter reached. Rebooting device..."
+                reboot
+            # We need to wait for the reboot to actually happen or the process might be interrupted
+                sleep 60 
+            fi
+        sleep $((240+$RANDOM%10))
+        else
+            log "RDM connection status: $rdmConnect -> Recheck in 4 minutes"
+            log "Something different went wrong..."
+            led_red
+            sleep $((240+$RANDOM%10))
+        fi
+    fi
 }
 
-# checkUpdates() {
-#     while :; do
-#         log "Checking for updates..."
+# Adjust the script depending on Atlas production or beta
 
-#         until ping -c1 8.8.8.8 >/dev/null 2>/dev/null; do
-#             sleep 10s
-#         done
+check_beta
 
-#         currentVersion=$(cat "$MODDIR/version_lock")
-#         remoteVersion=$(wget http://storage.googleapis.com/pokemod/Atlas/version -O-)
-#         if [ ."$remoteVersion" != "." ] && [ "$remoteVersion" -gt "$currentVersion" ]; then
-#             log "There's a new version of eMagisk!"
-#             log "Updating from $currentVersion to $remoteVersion"
-
-#             download "http://storage.googleapis.com/pokemod/Atlas/3-eMagisk.zip" "<SDCARD>/eMagisk.zip"
-#             if [ -e "<SDCARD>/eMagisk.zip" ]; then
-#                 log "Downloaded new version, rebooting to recovery and installing..."
-#                 rm -rf "<SDCARD>/TWRP"
-#                 mkdir -p /cache/recovery
-#                 touch /cache/recovery/command
-#                 echo '--update_package=<SDCARD>/eMagisk.zip' >>/cache/recovery/command
-#                 echo '--wipe_cache' >>/cache/recovery/command
-#                 sleep 10s
-#                 reboot recovery
-#             else
-#                 log "Something wrong happened and the file couldn't be downloaded!"
-#             fi
-#         elif [ ."$currentVersion" = ."$remoteVersion" ]; then
-#             log "eMagisk is up to date! Current version is $currentVersion"
-#         elif [ ."$remoteVersion" = "." ]; then
-#             log "Couldn't check for update, something wrong with the server :/"
-#             log "currentVersion: $currentVersion | remoteVersion: $remoteVersion"
-#         else
-#             log "Some error happened!"
-#             log "currentVersion: $currentVersion | remoteVersion: $remoteVersion"
-#         fi
-
-#         # WIP Pogo
-#         # currentVersion="$(dumpsys package $POGOPKG|awk -F'=' '/versionName/{print $2}')"
-#         # remoteVersion=$(wget http://storage.googleapis.com/pokemod/Atlas/version -O-)
-
-#         # TODO: Atlas
-
-#         sleep 1h
-#     done
-# }
-
-# checkUpdates &
+# Wipe out packages we don't need in our ATV
 
 echo "$UNINSTALLPKGS" | tr ' ' '\n' | while read -r item; do
     if ! dumpsys package "$item" | \grep -qm1 "Unable to find package"; then
@@ -77,20 +125,27 @@ echo "$UNINSTALLPKGS" | tr ' ' '\n' | while read -r item; do
 done
 
 # Enable playstore
+
 if [ "$(pm list packages -d com.android.vending)" = "package:com.android.vending" ]; then
     log "Enabling Play Store"
     pm enable com.android.vending
 fi
+
+# Enable Magiskhide if not enabled
 
 if ! magiskhide status; then
     log "Enabling MagiskHide"
     magiskhide enable
 fi
 
+# Add pokemon go to Magisk hide if it isn't
+
 if ! magiskhide ls | grep -m1 $POGOPKG; then
     log "Adding PoGo to MagiskHide"
     magiskhide add $POGOPKG
 fi
+
+# Give all atlas services root permissions
 
 for package in $ATLASPKG com.android.shell; do
     packageUID=$(dumpsys package "$package" | grep userId | head -n1 | cut -d= -f2)
@@ -107,12 +162,14 @@ for package in $ATLASPKG com.android.shell; do
 done
 
 # Set atlas mock location permission as ignore
+
 if ! appops get $ATLASPKG android:mock_location | grep -qm1 'No operations'; then
     log "Removing mock location permissions from $ATLASPKG"
     appops set $ATLASPKG android:mock_location 2
 fi
 
 # Disable all location providers
+
 if ! settings get; then
     log "Checking allowed location providers as 'shell' user"
     allowedProviders=".$(su shell -c settings get secure location_providers_allowed)"
@@ -129,49 +186,130 @@ if [ "$allowedProviders" != "." ]; then
     fi
 fi
 
-## TODO: Double check if this really makes any difference
-# if [ "$(settings get global hdmi_control_enabled)" != "0" ]; then
-#     settings put global hdmi_control_enabled 0
-# fi
+# Make sure the device doesn't randomly turn off
 
 if [ "$(settings get global stay_on_while_plugged_in)" != 3 ]; then
     log "Setting Stay On While Plugged In"
     settings put global stay_on_while_plugged_in 3
 fi
 
+
+# Health Service by Emi and Bubble with a little root touch
+
+#Check what Health Check is used...
+# 0 == Atlas Service Monitoring checks if the Atlas Mapping Service is still running
+# 1 == RDM Health Check based on lastseen status from the device
+configfile_rdm
+log "RDM_Check is: $rdm_check"
+if [[ $rdm_check != 1 ]]; then
+    log "RDM_Check is off! Will Start Atlas Service Monitoring..."
+
 # Health Service
-if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
-    (
-        count=0
-        log "eMagisk v$(cat "$MODDIR/version_lock"). Starting health check service..."
-        while :; do
-            sleep $((120+$RANDOM%10))
+    if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
+        (
+            count=0
+            log "eMagisk v$(cat "$MODDIR/version_lock"). Starting health check service..."
+            while :; do
+                sleep $((120+$RANDOM%10))
 
-            if ! pidof "$ATLASPKG:mapping"; then
-                log "Atlas Mapping Service is off for some reason!"
-                log "  -> If this happens for 6 minutes eMagisk will attempt to force restart Atlas!"
-                log "  -> If this keeps happening for a total of 20 minutes, eMagisk will reboot the device!"
-                count=$((count+1))
-                if [ $count -ge 10 ]; then
-                    log "Atlas Mapping Service is off for over 20 minutes! Rebooting device..."
-                    reboot
-                elif [ $count -ge 3 ]; then
-                    log "Atlas Mapping Service is off for over 6 minutes! Restarting services..."
-                    force_restart
+                if ! pidof "$ATLASPKG:mapping"; then
+                    log "Atlas Mapping Service is off for some reason!"
+                    log "  -> If this happens for 6 minutes eMagisk will attempt to force restart Atlas!"
+                    log "  -> If this keeps happening for a total of 20 minutes, eMagisk will reboot the device!"
+                    count=$((count+1))
+                    if [ $count -ge 10 ]; then
+                        log "Atlas Mapping Service is off for over 20 minutes! Rebooting device..."
+                        reboot
+                    elif [ $count -ge 3 ]; then
+                        log "Atlas Mapping Service is off for over 6 minutes! Restarting services..."
+                        force_restart
+                    fi
+                else
+                    if [ $count -gt 0 ]; then
+                        log "Atlas Mapping Service is back to operational! :)"
+                        count=0
+                    fi
                 fi
-            else
-                if [ $count -gt 0 ]; then
-                    log "Atlas Mapping Service is back to operational! :)"
-                    count=0
-                fi
-            fi
 
-            if ! pidof adbd; then
-                log "ADBD wasn't running! Starting service..."
-                start adbd
-            fi
-        done
-    ) &
+                if ! pidof adbd; then
+                    log "ADBD wasn't running! Starting service..."
+                    start adbd
+                fi
+            done
+        ) &
+    else
+        log "Atlas isn't installed on this device! The daemon will stop."
+    fi
+
 else
-    log "Atlas isn't installed on this device! The daemon will stop."
+#This should execute IF the RDM_Check = 1
+
+    if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
+        (
+            log "eMagisk v$(cat "$MODDIR/version_lock"). Starting health check service in 4 minutes..."
+            counter=0
+            rdmDeviceID=1
+            log "Start counter at $counter"
+            while :; do
+                sleep $((240+$RANDOM%10))
+                configfile_rdm        
+
+                if [[ $counter -gt 3 ]];then
+                    log "Critical restart threshold of $counter reached. Rebooting device..."
+                    reboot
+                    # We need to wait for the reboot to actually happen or the process might be interrupted
+                    sleep 60 
+                fi
+
+                log "Started health check!"
+                atlasDeviceName=$(cat /data/local/tmp/atlas_config.json | awk -F\" '{print $12}')
+	            rdmDeviceInfo=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true"  | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
+                rdmDeviceName=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
+	
+	            until [[ $rdmDeviceName = $atlasDeviceName ]]
+	            do
+		            $((rdmDeviceID++))
+		            rdmDeviceInfo=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
+		            rdmDeviceName=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
+		
+		            if [[ -z $rdmDeviceInfo ]]; then
+                        log "Probably reached end of device list or encountered a different issue!"
+                        log "Set RDM Device ID to 1, recheck RDM connection and repull $CONFIGFILE"
+			            rdmDeviceID=1
+                        #repull rdm values + recheck rdm connection
+                        configfile_rdm
+			            rdmDeviceName=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
+		            fi	
+	            done
+	
+	            log "Found our device! Checking for timestamps..."
+	            rdmDeviceLastseen=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Flast_seen\"\:\{\" '{print $2}' | awk -Ftimestamp\"\: '{print $2}' | awk -F\, '{print $1}' | sed 's/}//g')
+		        if [[ -z $rdmDeviceLastseen ]]; then
+			        log "The device last seen status is empty!"
+		        else
+	        	    now="$(date +'%s')"
+	        	    calcTimeDiff=$(($now - $rdmDeviceLastseen))
+	
+	        	    if [[ $calcTimeDiff -gt 300 ]]; then
+		        	    log "Last seen at RDM is greater than 5 minutes -> Atlas Service will be restarting..."
+		        	    force_restart
+                		led_red
+                		counter=$((counter+1))
+                		log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
+	        	    elif [[ $calcTimeDiff -le 10 ]]; then
+		        	    log "Our device is live!"
+                		counter=0
+                		led_blue
+	        	    else
+		        	    log "Last seen time is a bit off. Will check again later."
+                	    counter=0
+                	    led_blue
+	        	    fi
+		        fi
+                log "Scheduling next check in 4 minutes..."
+            done
+        ) &
+    else
+        log "Atlas isn't installed on this device! The daemon will stop."
+    fi
 fi
