@@ -264,7 +264,7 @@ else
 
             log "Started health check!"
             atlasDeviceName=$(cat /data/local/tmp/atlas_config.json | awk -F\" '{print $12}')
-            rdmDeviceInfo=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | jq --arg DEVICE "$atlasDeviceName" '.data.devices[] | select(.uuid=="$DEVICE"')
+            rdmDeviceInfo=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | jq --arg DEVICE "$atlasDeviceName" '.data.devices[] | select(.uuid==$DEVICE)')
 
             if [[ -z $rdmDeviceInfo ]]; then
                     log "No device info returned for $atlasDeviceName, recheck RDM connection and repull $CONFIGFILE"
