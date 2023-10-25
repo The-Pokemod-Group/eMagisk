@@ -245,70 +245,60 @@ else
 #This should execute IF the RDM_Check = 1
 
     if [ "$(pm list packages $ATLASPKG)" = "package:$ATLASPKG" ]; then
-        (
-            log "eMagisk v$(cat "$MODDIR/version_lock"). Starting health check service in 4 minutes..."
-            counter=0
-            rdmDeviceID=1
-            log "Start counter at $counter"
-            while :; do
-                sleep $((240+$RANDOM%10))
-                configfile_rdm        
+    (
+        log "eMagisk v$(cat "$MODDIR/version_lock"). Starting health check service in 4 minutes..."
+        counter=0
+        log "Start counter at $counter"
 
-                if [[ $counter -gt 3 ]];then
-                    log "Critical restart threshold of $counter reached. Rebooting device..."
-                    reboot
-                    # We need to wait for the reboot to actually happen or the process might be interrupted
-                    sleep 60 
+
+        while :; do
+            sleep $((240+$RANDOM%10))
+            configfile_rdm        
+
+            if [[ $counter -gt 3 ]];then
+                log "Critical restart threshold of $counter reached. Rebooting device..."
+                reboot
+                # We need to wait for the reboot to actually happen or the process might be interrupted
+                sleep 60 
+            fi
+
+            log "Started health check!"
+            atlasDeviceName=$(cat /data/local/tmp/atlas_config.json | awk -F\" '{print $12}')
+            rdmDeviceInfo=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | jq --arg DEVICE "$atlasDeviceName" '.data.devices[] | select(.uuid=="$DEVICE"')
+
+            if [[ -z $rdmDeviceInfo ]]; then
+                    log "No device info returned for $atlasDeviceName, recheck RDM connection and repull $CONFIGFILE"
+                    #repull rdm values + recheck rdm connection
+                    configfile_rdm
+            fi
+    
+            log "Found our device! Checking for timestamps..."
+            rdmDeviceLastseen=$(echo $rdmDeviceInfo | jq .last_seen.timestamp)
+            if [[ -z $rdmDeviceLastseen ]]; then
+                log "The device last seen status is empty!"
+            else
+                now="$(date +'%s')"
+                calcTimeDiff=$(($now - $rdmDeviceLastseen))
+    
+                if [[ $calcTimeDiff -gt 300 ]]; then
+                    log "Last seen at RDM is greater than 5 minutes -> Atlas Service will be restarting..."
+                    force_restart
+                        led_red
+                        counter=$((counter+1))
+                        log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
+                elif [[ $calcTimeDiff -le 10 ]]; then
+                    log "Our device is live!"
+                        counter=0
+                        led_blue
+                else
+                    log "Last seen time is a bit off. Will check again later."
+                    counter=0
+                    led_blue
                 fi
-
-                log "Started health check!"
-                atlasDeviceName=$(cat /data/local/tmp/atlas_config.json | awk -F\" '{print $12}')
-	            rdmDeviceInfo=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true"  | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
-                rdmDeviceName=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
-	
-	            until [[ $rdmDeviceName = $atlasDeviceName ]]
-	            do
-		            $((rdmDeviceID++))
-		            rdmDeviceInfo=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}')
-		            rdmDeviceName=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
-		
-		            if [[ -z $rdmDeviceInfo ]]; then
-                        log "Probably reached end of device list or encountered a different issue!"
-                        log "Set RDM Device ID to 1, recheck RDM connection and repull $CONFIGFILE"
-			            rdmDeviceID=1
-                        #repull rdm values + recheck rdm connection
-                        configfile_rdm
-			            rdmDeviceName=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Fuuid\"\:\" '{print $2}' | awk -F\" '{print $1}')
-		            fi	
-	            done
-	
-	            log "Found our device! Checking for timestamps..."
-	            rdmDeviceLastseen=$(curl -s -k -u $rdm_user:$rdm_password "$rdm_backendURL/api/get_data?show_devices=true&formatted=true" | awk -F\[ '{print $2}' | awk -F\}\,\{\" '{print $'$rdmDeviceID'}' | awk -Flast_seen\"\:\{\" '{print $2}' | awk -Ftimestamp\"\: '{print $2}' | awk -F\, '{print $1}' | sed 's/}//g')
-		        if [[ -z $rdmDeviceLastseen ]]; then
-			        log "The device last seen status is empty!"
-		        else
-	        	    now="$(date +'%s')"
-	        	    calcTimeDiff=$(($now - $rdmDeviceLastseen))
-	
-	        	    if [[ $calcTimeDiff -gt 300 ]]; then
-		        	    log "Last seen at RDM is greater than 5 minutes -> Atlas Service will be restarting..."
-		        	    force_restart
-                		led_red
-                		counter=$((counter+1))
-                		log "Counter is now set at $counter. device will be rebooted if counter reaches 4 failed restarts."
-	        	    elif [[ $calcTimeDiff -le 10 ]]; then
-		        	    log "Our device is live!"
-                		counter=0
-                		led_blue
-	        	    else
-		        	    log "Last seen time is a bit off. Will check again later."
-                	    counter=0
-                	    led_blue
-	        	    fi
-		        fi
-                log "Scheduling next check in 4 minutes..."
-            done
-        ) &
+            fi
+            log "Scheduling next check in 4 minutes..."
+        done
+    ) &
     else
         log "Atlas isn't installed on this device! The daemon will stop."
     fi
