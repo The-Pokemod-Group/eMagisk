@@ -45,8 +45,8 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "release-v${{ env.MASTER_VERSION_CODE }}-v${{ env.STANDALONE_VERSION_CODE }}"
+          automatic_release_tag: "latest"
           prerelease: true
-          title: "Combined Release v${{ env.MASTER_VERSION_CODE }} & v${{ env.STANDALONE_VERSION_CODE }}"
+          title: "Latest Release v${{ env.MASTER_VERSION_CODE }} & v${{ env.STANDALONE_VERSION_CODE }}"
           files: |
             *.zip
