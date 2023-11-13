@@ -57,4 +57,4 @@ jobs:
           prerelease: true
           title: "Latest Release"
           files: |
-            zips/*.zip
+            *.zip
