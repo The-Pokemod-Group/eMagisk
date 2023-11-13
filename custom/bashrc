@@ -149,6 +149,7 @@ function _clear() {
 # Taken from http://tinyurl.com/y5vgfon7
 # Further edits by @emi
 function select_option() {
+    # This returns 255 when SIGINT (Ctrl+C) is pressed
     ESC=$(printf "\033")
     cursor_blink_on() { printf "${ESC}[?25h"; }
     cursor_blink_off() { printf "${ESC}[?25l"; }
