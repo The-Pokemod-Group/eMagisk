@@ -19,13 +19,12 @@ jobs:
 
       - name: "Build Master"
         run: |
-          rm *.zip || true
           ver=$(sed -n "s|^versionCode=||p" module.prop)
           name=$(sed -n "s|^name=||p" module.prop | sed "s| |-|g")
           newVersion=$(echo $ver | sed 's|\(.\)\(.\)\(.\)|\1.\2.\3|')
-          zip -r "eMagisk-full-${newVersion}.zip" . -x ".git/*" "LICENSE" "build.sh" ".gitignore" "*.zip"
-          echo "Made eMagisk-full-${newVersion} ($ver)"
-          mv "eMagisk-full-${newVersion}.zip" "eMagisk-full-${ver}.zip"
+          zip -r "${name}-${newVersion}.zip" . -x ".git/*" "LICENSE" "build.sh" ".gitignore" "*.zip"
+          echo "Made ${name}-${newVersion} ($ver)"
+          mv "${name}-${newVersion}.zip" "eMagisk-full-${ver}.zip"
 
       - name: "Checkout Standalone Branch"
         uses: actions/checkout@v3
@@ -37,9 +36,9 @@ jobs:
           ver=$(sed -n "s|^versionCode=||p" module.prop)
           name=$(sed -n "s|^name=||p" module.prop | sed "s| |-|g")
           newVersion=$(echo $ver | sed 's|\(.\)\(.\)\(.\)|\1.\2.\3|')
-          zip -r "eMagisk-noatlas-${newVersion}.zip" . -x ".git/*" "LICENSE" "build.sh" ".gitignore" "*.zip"
-          echo "Made eMagisk-noatlas-${newVersion} ($ver)"
-          mv "eMagisk-noatlas-${newVersion}.zip" "eMagisk-noatlas-${ver}.zip"
+          zip -r "${name}-${newVersion}.zip" . -x ".git/*" "LICENSE" "build.sh" ".gitignore" "*.zip"
+          echo "Made ${name}-${newVersion} ($ver)"
+          mv "${name}-${newVersion}.zip" "eMagisk-noatlas-${ver}.zip"
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
@@ -48,4 +47,6 @@ jobs:
           prerelease: true
           title: "Latest Release v${{ env.MASTER_VERSION_CODE }} & v${{ env.STANDALONE_VERSION_CODE }}"
           files: |
-            *.zip
+            eMagisk-full-${{ env.MASTER_VERSION_CODE }}.zip
+            eMagisk-noatlas-${{ env.STANDALONE_VERSION_CODE }}.zip
+          
