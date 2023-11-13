@@ -30,7 +30,7 @@ set page-completions off
 set completion-ignore-case on
 
 # Se completion-ignore-case for on, trata underscores (_) e hífens (-) como iguais
-set completion-map-case on
+set completion-map-case off
 
 # Se o tamanho do prefixo comum entre items de autocomplete for maior do que 10,
 # ocultar o prefixo na lista de autocomplete.
@@ -53,7 +53,7 @@ set visible-stats on
 # Não adiciona barras no final de nomes de diretórios quando autocompletando
 # P.S.: se TAB está associado a menu-complete, é recomendado deixar esta
 # variável off, pois pode-se apertar / para autocompletar o diretório escolhido.
-set mark-directories off
+set mark-directories on
 
 # Faz o mesmo para symlinks. Do contrário ele não adicionaria a barra pois
 # teoricamente o synlink é somente um arquivo.
