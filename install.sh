@@ -152,14 +152,14 @@ print_modname() {
     ui_print "|                                                     |"
     ui_print "|             >   e M a g i s k   <                   |"
     ui_print "|                                                     |"
-    ui_print "|                      by The Pokemod Group           |"
+    ui_print "|                      by emi                         |"
     ui_print "|                                                     |"
     ui_print "|                                                     |"
     ui_print "|                                                     |"
     ui_print " _____________________________________________________"
     ui_print "|                                                     |"
     ui_print "|       Utility binaries, bash, pre-configs           |"
-    ui_print "|      and services for Atlas ATVs... all in one.     |"
+    ui_print "|                    all in one.                      |"
     ui_print "|                $version                               |"
     ui_print "|                                                     |"
     ui_print "|                                                     |"
@@ -215,28 +215,29 @@ on_install() {
         cp -rf "$TMPDIR/custom/${filename}" "$SDCARD/.${filename}"
     done
 
-    ui_print " "
-    ui_print " "
-    ui_print "================================================"
-    ui_print " Do you want to install ATV services?"
-    ui_print "   Press VOLUME UP to SKIP INSTALLATION."
-    ui_print "   Press VOLUME DOWN to INSTALL ATV Services."
-    ui_print " "
-    ui_print "   After 10 seconds services will be installed!"
-    ui_print " "
-    timeout 10 /system/bin/getevent -lc 1 2>&1 | /system/bin/grep VOLUME >$TMPDIR/events
+    # ui_print " "
+    # ui_print " "
+    # ui_print "================================================"
+    # ui_print " Do you want to install ATV services?"
+    # ui_print "   Press VOLUME UP to SKIP INSTALLATION."
+    # ui_print "   Press VOLUME DOWN to INSTALL ATV Services."
+    # ui_print " "
+    # ui_print "   After 10 seconds services will be installed!"
+    # ui_print " "
+    # timeout 10 /system/bin/getevent -lc 1 2>&1 | /system/bin/grep VOLUME >$TMPDIR/events
 
-    ui_print " "
+    # ui_print " "
 
-    if cat $TMPDIR/events | grep "VOLUMEUP"; then
-        ui_print " >>> Not installing ATV Services!"
-        # rm "$TMPDIR/module.prop"
-        PROPFILE=false
-        export PROPFILE=false
-    else
-        ui_print " >>> Installing ATV services..."
-        cp -rf "$TMPDIR/custom/ATVServices.sh" "$MODPATH/ATVServices.sh"
-    fi
+    export PROPFILE=false
+    # if cat $TMPDIR/events | grep "VOLUMEUP"; then
+    #     ui_print " >>> Not installing ATV Services!"
+    #     # rm "$TMPDIR/module.prop"
+    #     PROPFILE=false
+    #     export PROPFILE=false
+    # else
+    #     ui_print " >>> Installing ATV services..."
+    #     cp -rf "$TMPDIR/custom/ATVServices.sh" "$MODPATH/ATVServices.sh"
+    # fi
     ui_print "================================================"
 }
 
