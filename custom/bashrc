@@ -510,8 +510,8 @@ function grep {
     if [ -t 0 ] || [ -t 1 ]; then
         command grep -n -C 2 $_COLOR_ALWAYS_ARG -E "$@"
     elif { [ "$(LC_ALL=C stat -c %F - <&3)" = fifo ]; } 3>&1 ||
-           [ "$(LC_ALL=C stat -c %F -)" = fifo ] ||
-           [ -t 2 ]; then
+        [ "$(LC_ALL=C stat -c %F -)" = fifo ] ||
+        [ -t 2 ]; then
         # t -2 fixes adb -s [TAB] and other autocompletion
         command grep "$@"
     else
