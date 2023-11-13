@@ -1,17 +1,13 @@
 # eMagisk
 
-Installs useful binaries: bash, nano, strace, eventrec and tcpdump. Also optionally installs Atlas services that ensure uptime.
-
------
-### TODOs
-- Cleanup ATVServices.sh into separate files
-- Add checks for RDM
-- Add more performance optimization system props and tweaks
-- Remove obsolete things
-- And several others
+Installs useful binaries: bash, nano, strace, eventrec, tcpdump and others. Installs my bashrc as well.
+Links busybox binaries. Does a lot of other stuff.
 
 ----
 ## Changelog
+### 10.0.0
+- Removes everything related to Atlas
+
 ### 9.5.0
 - Enables Play Store again as Safety Net is being dropped by Play Integrity, the latter requiring an enabled and updated Play Store.
 
