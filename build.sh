@@ -14,6 +14,7 @@ fi
 newVersion=$(echo $newVerCode | \sed 's|\(.\)\(.\)\(.\)|\1\.\2\.\3|')
 
 sed --in-place "s|^versionCode=$ver|versionCode=$newVerCode|;s|^version=v.*|version=v$newVersion|" module.prop
+rm "$name-$newVersion".zip
 zip -r "$name-$newVersion".zip . -x ".git/*" "LICENSE" "build.sh" ".gitignore" "*.zip"
 # echo "$newVerCode" >../Deploy/version
 echo "Made $name-$newVersion ($newVerCode)"
