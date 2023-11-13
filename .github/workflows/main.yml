@@ -4,22 +4,35 @@ on:
   push:
     branches:
       - "master"
-      - "standalone"
+      - "standalone" 
   workflow_dispatch:
 
 jobs:
   pre-release:
     name: "Pre Release"
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch: [master, standalone]
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: "Extract Version Code"
+        id: version_code
+        run: |
+          VERSION_CODE=$(grep 'versionCode=' module.prop | cut -d'=' -f2)
+          echo "VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
+          echo "versionCode=$VERSION_CODE" >> $GITHUB_ENV
+
       - name: "Build"
         run: |
           sh ./build.sh github
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
+          automatic_release_tag: "${{ matrix.branch }}-${{ env.versionCode }}"
           prerelease: true
           files: |
             *.zip
