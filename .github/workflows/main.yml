@@ -8,45 +8,53 @@ on:
   workflow_dispatch:
 
 jobs:
-  pre-release:
-    name: "Release"
+  build-and-release:
+    name: "Build and Release"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch: [master, standalone]
+
+    steps:
+      - name: "Checkout Code"
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: "Prepare Build"
+        run: |
+          ver=$(sed -n "s|^versionCode=||p" module.prop)
+          echo "VERSION_CODE=$ver" >> $GITHUB_ENV
+          name=$(sed -n "s|^name=||p" module.prop | sed "s| |-|g")
+          newVersion=$(echo $ver | sed 's|\(.\)\(.\)\(.\)|\1.\2.\3|')
+          zipName="${name}-${newVersion}-${{ matrix.branch }}.zip"
+          echo "ZIP_NAME=$zipName" >> $GITHUB_ENV
+
+      - name: "Build ZIP"
+        run: |
+          zip -r "${{ env.ZIP_NAME }}" . -x ".git/*" "LICENSE" "build.sh" ".gitignore" "*.zip"
+          echo "Built ${{ env.ZIP_NAME }}"
+
+      - name: "Upload ZIP to Artifacts"
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.ZIP_NAME }}
+          path: ${{ env.ZIP_NAME }}
+
+  create-release:
+    needs: build-and-release
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout Master Branch"
-        uses: actions/checkout@v3
+      - uses: actions/download-artifact@v2
         with:
-          ref: 'master'
+          path: zips/
 
-      - name: "Build Master"
-        run: |
-          ver=$(sed -n "s|^versionCode=||p" module.prop)
-          name=$(sed -n "s|^name=||p" module.prop | sed "s| |-|g")
-          newVersion=$(echo $ver | sed 's|\(.\)\(.\)\(.\)|\1.\2.\3|')
-          zip -r "${name}-${newVersion}.zip" . -x ".git/*" "LICENSE" "build.sh" ".gitignore" "*.zip"
-          echo "Made ${name}-${newVersion} ($ver)"
-          mv "${name}-${newVersion}.zip" "eMagisk-full-${ver}.zip"
-
-      - name: "Checkout Standalone Branch"
-        uses: actions/checkout@v3
-        with:
-          ref: 'standalone'
-
-      - name: "Build Standalone"
-        run: |
-          ver=$(sed -n "s|^versionCode=||p" module.prop)
-          name=$(sed -n "s|^name=||p" module.prop | sed "s| |-|g")
-          newVersion=$(echo $ver | sed 's|\(.\)\(.\)\(.\)|\1.\2.\3|')
-          zip -r "${name}-${newVersion}.zip" . -x ".git/*" "LICENSE" "build.sh" ".gitignore" "*.zip"
-          echo "Made ${name}-${newVersion} ($ver)"
-          mv "${name}-${newVersion}.zip" "eMagisk-noatlas-${ver}.zip"
-
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - name: "Create GitHub Release"
+        uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: true
-          title: "Latest Release v${{ env.MASTER_VERSION_CODE }} & v${{ env.STANDALONE_VERSION_CODE }}"
+          title: "Latest Release"
           files: |
-            eMagisk-full-${{ env.MASTER_VERSION_CODE }}.zip
-            eMagisk-noatlas-${{ env.STANDALONE_VERSION_CODE }}.zip
-          
+            zips/*.zip
