@@ -1,0 +1,217 @@
+#!/bin/sh
+
+# Define the path to stackplz
+STACKPLZ_PATH="/data/local/tmp/stackplz"
+
+# Function to get the directory where the script is located
+get_script_dir() {
+    echo "$(cd "$(dirname "$0")" && pwd)"
+}
+
+# Prepare function for initial setup and checks
+prepare() {
+    if [ ! -f "$STACKPLZ_PATH" ]; then
+        echo "stackplz not found in $STACKPLZ_PATH. Attempting to install..."
+
+        # Get the directory of the current script
+        local script_dir=$(get_script_dir)
+
+        # Check if stackplz.bin exists in the script's directory
+        if [ -f "$script_dir/stackplz.bin" ]; then
+            # Copy stackplz.bin to /data/local/tmp and rename it
+            cp "$script_dir/stackplz.bin" "$STACKPLZ_PATH"
+            chmod +x "$STACKPLZ_PATH"
+            $STACKPLZ_PATH --prepare
+            echo "stackplz has been installed to $STACKPLZ_PATH."
+        else
+            echo "Error: stackplz.bin not found in $script_dir. Please ensure it is available."
+            exit 1
+        fi
+    fi
+
+    # Additional checks can be added here (e.g., permissions, environment validation)
+    echo "Preparation complete. stackplz is ready at $STACKPLZ_PATH."
+}
+# Function to perform syscall tracing
+trace_syscalls() {
+    local types=$1
+    local output=$2
+    local dumphex=$3
+
+    # Construct the command
+    cmd="$STACKPLZ_PATH --syscall $types -o $output"
+    if [ "$dumphex" = "true" ]; then
+        cmd="$cmd --dumphex"
+    fi
+
+    # Execute the command
+    echo "Executing: $cmd"
+    eval $cmd
+}
+
+# Define specific syscall groups
+SYS_GROUP_ALL="all"
+SYS_GROUP_ATTR="setxattr,lsetxattr,fsetxattr,getxattr,lgetxattr,fgetxattr,listxattr,llistxattr,flistxattr,removexattr,lremovexattr,fremovexattr"
+SYS_GROUP_FILE="openat,openat2,faccessat,faccessat2,mknodat,mkdirat,unlinkat,symlinkat,linkat,renameat,renameat2,readlinkat,chdir,fchdir,chroot,fchmod,fchmodat,fchownat,fchown"
+SYS_GROUP_EXEC="execve,execveat"
+SYS_GROUP_CLONE="clone,clone3"
+SYS_GROUP_PROCESS="clone,clone3,execve,execveat,wait4,waitid,exit,exit_group,rt_sigqueueinfo,pidfd_send_signal,pidfd_open,pidfd_getfd"
+SYS_GROUP_NET="socket,socketpair,bind,listen,accept,connect,getsockname,getpeername,setsockopt,getsockopt,sendto,recvfrom,sendmsg,recvmsg,shutdown,recvmmsg,sendmmsg,accept4"
+SYS_GROUP_SIGNAL="sigaltstack,rt_sigsuspend,rt_sigaction,rt_sigprocmask,rt_sigpending,rt_sigtimedwait,rt_sigqueueinfo,rt_sigreturn,rt_tgsigqueueinfo"
+SYS_GROUP_KILL="kill,tkill,tgkill"
+SYS_GROUP_EXIT="exit,exit_group"
+SYS_GROUP_DUP="dup,dup3"
+SYS_GROUP_EPOLL="epoll_create1,epoll_ctl,epoll_pwait,epoll_pwait2"
+SYS_GROUP_STAT="statfs,fstatfs,newfstatat,fstat,statx"
+
+# Function to list syscalls or groups
+list_items() {
+    local type=$1
+
+    case "$type" in
+        syscalls)
+            echo "All Syscalls: $SYS_GROUP_ALL"
+            echo "Attribute Syscalls: $SYS_GROUP_ATTR"
+            echo "File Syscalls: $SYS_GROUP_FILE"
+            # Add more syscall groups as needed
+            ;;
+        groups)
+            echo "Syscall Groups:"
+            echo "All: $SYS_GROUP_ALL"
+            echo "Attribute: $SYS_GROUP_ATTR"
+            echo "File: $SYS_GROUP_FILE"
+            # Add more groups as needed
+            ;;
+        *)
+            echo "Invalid list type: $type"
+            exit 1
+            ;;
+    esac
+}
+
+
+# Function to perform syscall tracing with filters
+trace_syscalls_with_filters() {
+    local types=$1
+    local output=$2
+    local dumphex=$3
+    local whitelist=$4
+    local blacklist=$5
+    local pid=$6
+    local tid=$7
+
+    # Construct the command
+    cmd="$STACKPLZ_PATH --syscall $types -o $output"
+    if [ "$dumphex" = "true" ]; then
+        cmd="$cmd --dumphex"
+    fi
+    if [ -n "$whitelist" ]; then
+        cmd="$cmd --whitelist $whitelist"
+    fi
+    if [ -n "$blacklist" ]; then
+        cmd="$cmd --blacklist $blacklist"
+    fi
+    if [ -n "$pid" ]; then
+        cmd="$cmd --pid $pid"
+    fi
+    if [ -n "$tid" ]; then
+        cmd="$cmd --tid $tid"
+    fi
+
+    # Execute the command
+    echo "Executing: $cmd"
+    eval $cmd
+}
+
+# Function to perform batch process tracking
+track_process_batch() {
+    local name=$1
+    local exclude_uid=$2
+    local syscall=$3
+    local output=$4
+
+    # Construct the command
+    cmd="$STACKPLZ_PATH -n $name"
+    if [ -n "$exclude_uid" ]; then
+        cmd="$cmd --no-uid $exclude_uid"
+    fi
+    if [ -n "$syscall" ]; then
+        cmd="$cmd --syscall $syscall"
+    fi
+    cmd="$cmd -o $output"
+
+    # Execute the command
+    echo "Executing: $cmd"
+    eval $cmd
+}
+
+# Extend main function to include process tracking
+main() {
+    case "$1" in
+        prepare)
+            prepare
+            ;;
+        trace)
+            # Existing trace implementation...
+            ;;
+        list)
+            # Existing list implementation...
+            ;;
+        track)
+            shift
+            local name=$1
+            local exclude_uid=""
+            local syscall=""
+            local output="process_track.log"
+            shift
+            while [ "$1" != "" ]; do
+                case "$1" in
+                    --no-uid)
+                        shift
+                        exclude_uid=$1
+                        ;;
+                    --syscall)
+                        shift
+                        syscall=$1
+                        ;;
+                    -o)
+                        shift
+                        output=$1
+                        ;;
+                    *)
+                        echo "Unknown option: $1"
+                        exit 1
+                        ;;
+                esac
+                shift
+            done
+            track_process_batch "$name" "$exclude_uid" "$syscall" "$output"
+            ;;
+        *)
+            echo "Unknown command: $1"
+            exit 1
+            ;;
+    esac
+}
+
+# Display usage information
+usage() {
+    echo "Usage: $(basename $0) [command] [options]"
+    echo "Commands:"
+    echo "  prepare - Prepare the environment for stackplz."
+    echo "  trace - Perform syscall tracing."
+    echo "  list - List syscalls or syscall groups."
+    echo "  track - Track processes in batches by group."
+    echo "Optional process groupings:"
+    echo "  root, system, shell, app, iso"
+    echo "Example:"
+    echo "  $(basename $0) track -n app --no-uid 10084 --syscall openat -o tmp.log"
+    echo "  $(basename $0) track -n com.starbucks.cn,iso --syscall openat -o tmp.log"
+}
+
+# Start the script
+if [ $# -eq 0 ]; then
+    usage
+else
+    main "$@"
+fi

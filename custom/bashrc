@@ -216,6 +216,45 @@ function format_duration() {
         printf "%ds" $S
 }
 
+## +-+-+-+-+-+-+-+-+-+-+-+-+-+
+## |b|a|s|h|_|p|r|o|f|i|l|e|r|
+## +-+-+-+-+-+-+-+-+-+-+-+-+-+
+profile_command() {
+    if [[ $# -eq 0 || $# -ne 2 ]]; then
+        echo "Usage: profile_command number_of_times 'command [args]'"
+        echo -e "\nExample: profile_command 10 'sleep 1'"
+        echo -e "This will run 'sleep 1' 10 times and print statistics about the performance."
+        echo -e "Note: you must quote the command to be profiled. Bash builtins aren't supported."
+        return 1
+    fi
+    local high_precision=false
+    local date_cmd='date +%s'
+    if _e bc && [[ $(date '+%N') != "+%N" ]]; then
+        high_precision=true
+        date_cmd='date +%s.%N'
+    fi
+
+    start_time=0
+    end_time=0
+    start_time="$($date_cmd)"
+    for round in $(seq 1 "$1"); do
+        $2 >/dev/null
+        echo -en "\rRound $round/$1"
+    done
+    end_time="$($date_cmd)"
+    local elapsed_time
+    local time_per_round
+    if $high_precision; then
+        elapsed_time=$(echo "scale=13; $end_time-$start_time" | bc -l)
+        time_per_round=$(echo "scale=8; ${elapsed_time} * 1000 / ${1}" | bc -l)
+    else
+        elapsed_time=$((end_time - start_time))
+        time_per_round=$((elapsed_time / $1))
+    fi
+
+    echo -e "\nTotal time:\t$elapsed_time seconds.\nTime per round:\t$time_per_round ms."
+}
+
 ##  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ##  |g|e|t|_|t|r|u|n|c|a|t|e|d|_|p|w|d|
 ##  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -228,6 +267,14 @@ function _get_truncated_pwd() {
     echo -n "${newPWD}"
 }
 
+##  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+##  |d|i|s|a|b|l|e|_|v|e|n|v|_|p|r|o|m|p|t|
+##  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+## Disables the native embedded venv prompt so we can make our own
+export VIRTUAL_ENV_DISABLE_PROMPT=0
+function _virtualenv_info() {
+    [[ -n "$VIRTUAL_ENV" ]] && echo "${VIRTUAL_ENV##*/}"
+}
 #  _____       _
 # /  __ \     | |
 # | /  \/ ___ | | ___  _ __ ___
@@ -265,32 +312,63 @@ export LESS_TERMCAP_us=$'\E[01;32m'
 ## is the command history position, meaning that if you want to
 ## replay a particular entry with the number 4513, you can run:
 ##   !!4513
+## You can also get context around a particular entry with:
+##   h 4513
 function h() {
+    GET_NEARBY=0
+    if [[ $1 =~ ^[0-9][0-9]*$ ]]; then
+        GET_NEARBY=1
+    fi
     # Workaround for the lack of
     # multidimensional arrays in bash.
     local results_cmds=()
     local results_nums=()
     local query="${@}"
 
-    readarray -d '' grepped_history < <(history | grep -ZE -- "$query")
+    if [[ $GET_NEARBY == 1 ]]; then
+        readarray -d '' grepped_history < <(history | \grep -ZEC30 "^$1 ")
+    else
+        readarray -d '' grepped_history < <(history | \grep -ZEC0 -- "$query")
+    fi
+    # echo $
     while read -r entry; do
         local number="${entry// */}"
         local datetime="${entry#*[}"
         datetime="${datetime%] *}"
         local cmd="${entry##$number*$datetime] }"
-        # Strips repeated results
-        if [[ ! "${results_cmds[*]}" =~ $cmd ]]; then
+        # # Strips repeated results
+        if [[ $GET_NEARBY == 0 ]]; then
+            if [[ ! "${results_cmds[*]}" =~ $cmd ]]; then
+                results_cmds+=("$cmd")
+                results_nums+=("$number")
+            fi
+        else
             results_cmds+=("$cmd")
             results_nums+=("$number")
         fi
     done < <(echo "${grepped_history[@]}")
 
-    local string
+    num=0
     for r in "${!results_cmds[@]}"; do
-        cmd=$(echo "${results_cmds[$r]}" | grep -E "$query")
+        if [[ $GET_NEARBY == 1 ]]; then
+            cmd="${results_cmds[$r]}"
+            if [[ "${results_nums[$r]}" -eq $1 ]]; then
+                cmd=$'\e[33m'"${results_cmds[$r]}"$'\e[00m'
+            fi
+        else
+            cmd="$(echo "${results_cmds[$r]}" | sed "s/\($query\)/"$'\e[33m'"\1"$'\e[00m'"/g")"
+            if [[ $cmd == "" ]]; then
+                cmd="${results_cmds[$r]}"
+            fi
+        fi
+        # if [[ "${results_nums[$r]}" -gt "$((num+1))" ]]; then
+        #     printf "\e[01;95m============\e[00m\n"
+        # fi
+        num=${results_nums[$r]}
         line="\e[01;96m${results_nums[$r]} \e[00m$cmd\e[00m"
         printf "$line\n"
     done
+    printf "\e[01;95m============\e[00m\n"
 }
 
 ##  +-+-+-+-+ +-+-+-+-+-+-+-+
@@ -351,6 +429,50 @@ function findir() {
     fi
 }
 
+##  +-+-+-+-+-+-+
+##  |c|d|c|o|o|l|
+##  +-+-+-+-+-+-+
+## This shows a selector to quickly change
+## cd into commonly used, hard-to-type directories,
+## changing to a su prompt if the user doesn't have
+## reading permissions as well.
+function cdcool() {
+    # Filters the array in case there's an arg
+    if [[ -n "$1" ]]; then
+        for index in "${!cool_places[@]}"; do
+            if [[ ! ${cool_places[$index]} =~ $1 ]]; then
+                unset -v 'cool_places[$index]'
+            fi
+        done
+    fi
+
+    # Let the user choose
+    if [[ ${#cool_places[@]} -eq 1 ]]; then
+        selected_index=0
+    else
+        select_option "${cool_places[@]}"
+        selected_index="$?"
+    fi
+
+    final_path="${cool_places[$selected_index]/#\$HOME/$HOME}"
+
+    if [[ ! -d "$final_path" ]]; then
+        echo "The selected path does not exist. Fix your script." && return 1
+    elif ! test -r "$final_path"; then
+        echo -n "No read permissions for $final_path! "
+        sudo su root sh -c "cd $final_path; bash" # don't ask, just don't.
+    else
+        cd "$final_path" || return 1
+    fi
+}
+## List of places to show when using 'cdcool [arg]'
+cool_places=(
+    "/data/local/tmp"
+    "/data/data/"
+    "/data/user/0"
+    "/sdcard"
+)
+
 
 ###   ___  _ _                                        _    _____                     _     _
 ###  / _ \| (_)                                      | |  |  _  |                   (_)   | |
@@ -358,14 +480,24 @@ function findir() {
 ### |  _  | | |/ _` / __|/ _ \/ __|   / _` | '_ \ / _` |  | | | \ \ / / _ \ '__| '__| |/ _` |/ _ \/ __|
 ### | | | | | | (_| \__ \  __/\__ \  | (_| | | | | (_| |  \ \_/ /\ V /  __/ |  | |  | | (_| |  __/\__ \
 ### \_| |_/_|_|\__,_|___/\___||___/   \__,_|_| |_|\__,_|   \___/  \_/ \___|_|  |_|  |_|\__,_|\___||___/
+## Allows using aliases after sudo (the ending space is what does teh trick)
+alias sudo='su -c '
+## Navigation
+alias ls="${GRC}ls -ltr --classify --human-readable -rt $_COLOR_ALWAYS_ARG --group-directories-first --literal --time-style=long-iso"
+
+
+## True screen clearing
+function clear() {
+    echo -en "\033c"
+}
 
 ##  +-+-+-+-+-+ +-+-+-+-+
 ##  |S|p|i|c|y| |G|r|e|p|
 ##  +-+-+-+-+-+ +-+-+-+-+
 ## This makes grep run without the extra arguments unless it's being either piped:
-##   cat ~/.bashrc | grep "LESS"
+##   cat $HOME/.bashrc | grep "LESS"
 ## or normally ran interactively:
-##   grep ~/.bashrc "^export"
+##   grep $HOME/.bashrc "^export"
 ## This way it'll work for <(grep ..) or var=$(grep ..) or echo '' | grep
 ## but won't affect scripts or other complex command chains.
 ##
@@ -385,6 +517,63 @@ function grep {
         command grep "$@"
     fi
 }
+
+##  +-+-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+
+##  |O|v|e|r|r|i|d|i|n|g| |A|l|i|a|s|e|s|
+##  +-+-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+
+## Makes diff decent
+if _e colordiff; then
+    alias diff="colordiff -B -U 5 --suppress-common-lines"
+else
+    alias diff="diff $_COLOR_ALWAYS_ARG -B -U 5 --suppress-common-lines"
+fi
+## Watch defaults
+if watch --help 2>/dev/null | grep -qm1 color; then
+    alias watch="watch --color -n 0.5"
+else
+    alias watch="watch -n 0.5"
+fi
+## Colors on DF
+alias df="${GRC}df -H"
+## Makes ccze not stupid (fast and no output clearing)
+_e "ccze" && alias ccze='ccze -A -o nolookups'
+
+##  +-+-+-+-+ +-+-+
+##  |I|Q|4|7| |R|M|
+##  +-+-+-+-+ +-+-+
+## Safe rm using gio trash
+## Falls back to rm in any unsupported case
+## Only caveat: ignores -r as gio trash already
+## does it recursively without choice
+if _e gio; then
+    function rm() {
+        use_gio=true
+        local argv=("$@")
+        for index in "${!argv[@]}"; do
+            if [[ ${argv[$index]} == '-r' || ${argv[$index]} == '-R' ]]; then
+                unset -v 'argv[$index]'
+            elif [[ ${argv[$index]} =~ ^-{1}[^-]?[rR] ]]; then
+                argv[$index]=${argv[$index]//[Rr]/}
+                echo "new argv is ${argv[$index]}"
+            fi
+            if [[ ${argv[$index]} =~ ^-[^f] && ${argv[$index]} != "--force" ]]; then
+                echo "keep argv is ${argv[$index]}"
+                use_gio=false
+            fi
+        done
+
+        if $use_gio; then
+            if gio trash "${argv[@]}" 2>/dev/null; then
+                echo "Sent to Trash (gio)."
+                return 0
+            else
+                echo "Gio failed, trying rm ${*}."
+            fi
+        fi
+        command rm "${@}"
+    }
+fi
+
 
 ##  +-+-+-+-+-+-+-+-+-+-+ +-+-+-+-+-+-+-+
 ##  |O|v|e|r|r|i|d|i|n|g| |A|l|i|a|s|e|s|

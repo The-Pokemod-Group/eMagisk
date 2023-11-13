@@ -31,9 +31,3 @@ pgrep zygote >/dev/null && {
 }
 
 log "System boot completed!"
-
-if [ -f "$MODDIR/ATVServices.sh" ]; then
-    sleep 20
-    log "Starting ATVServices.sh"
-    . "$MODDIR/ATVServices.sh"
-fi

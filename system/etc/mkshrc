@@ -11,6 +11,11 @@ if [ -d "/sbin/.magisk/busybox" ]; then
   BBDIR="/sbin/.magisk/busybox"
 elif [ -d "/sbin/.core/busybox" ]; then
   BBDIR="/sbin/.core/busybox"
+elif [ -f "/data/adb/magisk/busybox" ]; then
+  if ! [ -d "/data/local/tmp/bb" ]; then
+    /data/adb/magisk/busybox --install -s /data/local/tmp/bb
+    BBDIR="/data/local/tmp/bb"
+  fi
 fi
 
 PATH=$BBDIR:$PATH:/sbin
