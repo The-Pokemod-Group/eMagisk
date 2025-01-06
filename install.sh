@@ -1,21 +1,4 @@
 ##########################################################################################
-#
-# Magisk Module Installer Script
-#
-##########################################################################################
-##########################################################################################
-#
-# Instructions:
-#
-# 1. Place your files into system folder (delete the placeholder file)
-# 2. Fill in your module's info into module.prop
-# 3. Configure and implement callbacks in this file
-# 4. If you need boot scripts, add them into common/post-fs-data.sh or common/service.sh
-# 5. Add your additional or modified system properties into common/system.properly
-#
-##########################################################################################
-
-##########################################################################################
 # Config Flags
 ##########################################################################################
 
@@ -148,24 +131,24 @@ print_modname() {
     ui_print "░░░░░░░░░░░░▒▒████████▒▒█▒▒▒▒▒▒█▒▒▒▒██▒▒░░░░░░░░░░░░░"
     ui_print "░░░░░░░░░░░░░░░░░▒▒████████████████▒▒░░░░░░░░░░░░░░░░"
     ui_print ""
-    ui_print " _____________________________________________________"
-    ui_print "|                                                     |"
-    ui_print "|             >   e M a g i s k   <                   |"
-    ui_print "|                                                     |"
-    ui_print "|                      by emi                         |"
-    ui_print "|                                                     |"
-    ui_print "|                                                     |"
-    ui_print "|                                                     |"
-    ui_print " _____________________________________________________"
-    ui_print "|                                                     |"
-    ui_print "|       Utility binaries, bash, pre-configs           |"
-    ui_print "|                    all in one.                      |"
-    ui_print "|                $version                               |"
-    ui_print "|                                                     |"
-    ui_print "|                                                     |"
-    ui_print "|        by emi (@emi#0001) - emi@pokemod.dev         |"
-    ui_print "|         Pokemod.dev  | Discord.gg/Pokemod           |"
-    ui_print "|_____________________________________________________| "
+    ui_print " ___________________________________________________"
+    ui_print "|                                                   |"
+    ui_print "|             >   e M a g i s k   <                 |"
+    ui_print "|                                                   |"
+    ui_print "|                      by emi                       |"
+    ui_print "|                                                   |"
+    ui_print "|                                                   |"
+    ui_print "|                                                   |"
+    ui_print " ___________________________________________________"
+    ui_print "|                                                   |"
+    ui_print "|       Utility binaries, bash, pre-configs         |"
+    ui_print "|                    all in one.                    |"
+    ui_print "|                $version                           |"
+    ui_print "|                                                   |"
+    ui_print "|                                                   |"
+    ui_print "|        by emi (@emi#0001) - emi@pokemod.dev       |"
+    ui_print "|         Pokemod.dev  | Discord.gg/Pokemod         |"
+    ui_print "|___________________________________________________| "
     ui_print " "
 }
 

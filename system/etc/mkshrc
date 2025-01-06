@@ -21,6 +21,6 @@ elif [ -f "/data/adb/magisk/busybox" ]; then
 fi
 
 PATH=$BBDIR:$PATH:/sbin
-export TERM HOME MKSH HOSTNAME SHELL USER PATH
+export TERM TERMINFO HOME MKSH HOSTNAME SHELL USER PATH
 
 exec env HOME=<SDCARD> <BIN>/bash --rcfile <SDCARD>/.bashrc
