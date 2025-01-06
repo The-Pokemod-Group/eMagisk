@@ -4,7 +4,8 @@
 #-
 # Minimal /system/etc/mkshrc for Android
 
-: ${TERM:=xterm-256color} ${HOME=<SDCARD>} ${MKSH:=<BIN>/bash} ${HOSTNAME:=android}
+: ${TERM:=xterm-256color} ${TERMINFO:=/system/etc/terminfo}
+: ${HOME=<SDCARD>} ${MKSH:=<BIN>/bash} ${HOSTNAME:=android}
 : ${SHELL:=$MKSH} ${USER=$(getprop ro.product.device)}
 
 if [ -d "/sbin/.magisk/busybox" ]; then
@@ -13,6 +14,7 @@ elif [ -d "/sbin/.core/busybox" ]; then
   BBDIR="/sbin/.core/busybox"
 elif [ -f "/data/adb/magisk/busybox" ]; then
   if ! [ -d "/data/local/tmp/bb" ]; then
+    mkdir -p /data/local/tmp/bb
     /data/adb/magisk/busybox --install -s /data/local/tmp/bb
     BBDIR="/data/local/tmp/bb"
   fi
