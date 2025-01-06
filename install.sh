@@ -170,12 +170,12 @@ print_modname() {
 }
 
 # Copy/extract your module files into $MODPATH in on_install.
+
 on_install() {
-    # The following is the default implementation: extract $ZIPFILE/system to $MODPATH
-    # Extend/change the logic to whatever you want
     ui_print "- Extracting module files"
     unzip -o "$ZIPFILE" 'system/*' -d $MODPATH >&2
     unzip -o "$ZIPFILE" 'custom/*' -d $TMPDIR >&2
+
     if [ -d /system/xbin ]; then
         BIN=/system/xbin
         mv $MODPATH/system/bin "$MODPATH$BIN"
@@ -184,13 +184,37 @@ on_install() {
     fi
     ui_print "- Setting BIN: $BIN."
 
-    # Avoids issues with grepping the version code from modules.prop:
-    touch $MODPATH/version_lock
-    echo "$versionCode" > $MODPATH/version_lock
-    ui_print "> Saved version_lock $versionCode"
+    # Detect device ABI
+    case "$ARCH" in
+        arm)
+            ui_print "- Detected architecture: arm"
+            mv $MODPATH$BIN/nano.bin-arm $MODPATH$BIN/nano
+            mv $MODPATH$BIN/bash-arm $MODPATH$BIN/bash
+            ;;
+        arm64)
+            ui_print "- Detected architecture: arm64"
+            mv $MODPATH$BIN/nano.bin-arm64 $MODPATH$BIN/nano
+            mv $MODPATH$BIN/bash-arm64 $MODPATH$BIN/bash
+            ;;
+        x86)
+            ui_print "- Detected architecture: x86 (unsupported)"
+            abort "x86 is not supported."
+            ;;
+        x64)
+            ui_print "- Detected architecture: x64 (unsupported)"
+            abort "x64 is not supported."
+            ;;
+        *)
+            ui_print "- Detected architecture: unknown"
+            abort "Unsupported architecture: $ARCH"
+            ;;
+    esac
 
-    # find $MODPATH -type f | sed 's/_update//'
-    # find $TMPDIR -type f | sed -e 's|/dev/tmp/||' -e 's|custom/|/sdcard/|'
+    # Cleanup unused binaries
+    rm -f $MODPATH$BIN/nano.bin-*
+    rm -f $MODPATH$BIN/bash-*
+
+    ui_print "- Setting up mkshrc for the detected environment."
     if [ -d /sdcard ]; then
         SDCARD=/sdcard
     elif [ -d /storage/emulated/0 ]; then
@@ -200,63 +224,11 @@ on_install() {
 
     sed -i "s|<SDCARD>|$SDCARD|g" $MODPATH/system/etc/mkshrc
     sed -i "s|<BIN>|$BIN|g" $MODPATH/system/etc/mkshrc
-    sed -i "s|<SDCARD>|$SDCARD|g" $TMPDIR/custom/bashrc
-    sed -i "s|<SDCARD>|$SDCARD|g" $TMPDIR/custom/ATVServices.sh
 
-    for filepath in $TMPDIR/custom/*; do
-        filename=${filepath##*/}
-        [ "$filename" == "ATVServices.sh" ] && continue
-        # if [ -f "$SDCARD/.${filename}" ] || [ -d "$SDCARD/${filename}" ]]; then
-        #     ui_print "   $SDCARD/.${filename} is already intalled! Backing up to $SDCARD/EmagiskBackups/"
-        #     mkdir -p "$SDCARD/EmagiskBackups"
-        #     cp -rf "$SDCARD/.${filename}" "$SDCARD/EmagiskBackups/${filename}.bak"
-        # fi
-        ui_print "   Copying ${filename} to $SDCARD/.${filename}"
-        cp -rf "$TMPDIR/custom/${filename}" "$SDCARD/.${filename}"
-    done
-
-    # ui_print " "
-    # ui_print " "
-    # ui_print "================================================"
-    # ui_print " Do you want to install ATV services?"
-    # ui_print "   Press VOLUME UP to SKIP INSTALLATION."
-    # ui_print "   Press VOLUME DOWN to INSTALL ATV Services."
-    # ui_print " "
-    # ui_print "   After 10 seconds services will be installed!"
-    # ui_print " "
-    # timeout 10 /system/bin/getevent -lc 1 2>&1 | /system/bin/grep VOLUME >$TMPDIR/events
-
-    # ui_print " "
-
-    export PROPFILE=false
-    # if cat $TMPDIR/events | grep "VOLUMEUP"; then
-    #     ui_print " >>> Not installing ATV Services!"
-    #     # rm "$TMPDIR/module.prop"
-    #     PROPFILE=false
-    #     export PROPFILE=false
-    # else
-    #     ui_print " >>> Installing ATV services..."
-    #     cp -rf "$TMPDIR/custom/ATVServices.sh" "$MODPATH/ATVServices.sh"
-    # fi
-    ui_print "================================================"
+    ui_print "- Module files installed successfully!"
 }
-
-# Only some special files require specific permissions
-# This function will be called after on_install is done
-# The default permissions should be good enough for most cases
 
 set_permissions() {
-    # The following is the default rule, DO NOT remove
     set_perm_recursive $MODPATH 0 0 1755 0744
-
-    # Here are some examples:
     set_perm_recursive $MODPATH$BIN 0 0 1755 0777
-    # set_perm $MODPATH/$BIN/bash 0 0 1755  0644
-    # set_perm $MODPATH/$BIN/eventrec 0 0 1755  0644
-    # set_perm $MODPATH/$BIN/strace 0 0 1755  0644
-    # set_perm $MODPATH/$BIN/tcpdump 0 0 1755  0644
-    # set_perm $MODPATH/$BIN/nano 0 0 1755  0644
-    # set_perm $MODPATH/$BIN/nano.bin 0 0 1755  0644
 }
-
-# You can add more functions to assist your custom script code
