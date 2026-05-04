@@ -7,6 +7,12 @@
 MODDIR=${0%/*}
 
 logfile=/data/local/tmp/emagisk.log
+SDCARD_PATH=/sdcard
+
+if [ ! -d "$SDCARD_PATH/Download" ] && [ -d /storage/emulated/0/Download ]; then
+    SDCARD_PATH=/storage/emulated/0
+fi
+
 log() {
     echo "$(date -u +"%Y-%m-%d %H:%M:%S") eMagisk | ${*}" >>$logfile
     /system/bin/log -t eMagisk -p i "${@}"
@@ -18,7 +24,7 @@ log "Waiting for boot to complete..."
 # credit for the shit below:
 #   Advanced Charging Controller (teh good stuff)
 # wait until data is decrypted
-until [ -d /sdcard/Download ]; do
+until [ -d "$SDCARD_PATH/Download" ]; do
     sleep 10
 done
 

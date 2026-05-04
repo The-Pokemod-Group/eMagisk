@@ -1,7 +1,7 @@
 id=emichicks
 name=eMagisk
-version=v3.0.06
-versionCode=3006
+version=v3.1
+versionCode=3100
 author=emi
-description=Installs useful binaries: bash, nano, strace, eventrec and tcpdump.
+description=Arm64 shell module with bash, curl, nano, sqlite3, strace, tcpdump, and dotfiles.
 minMagisk=20000

@@ -29,8 +29,8 @@
 cd "/data/local/tmp" || true
 
 # Loads inputrc
-if [ -f /sdcard/.inputrc ]; then
-    bind -f /sdcard/.inputrc
+if [ -f "$HOME/.inputrc" ]; then
+    bind -f "$HOME/.inputrc"
 fi
 
 ## Returns if the current shell is a SSH shell.
@@ -133,8 +133,8 @@ shopt -s histappend
 ###  \___/ \__|_|_|___/
 
 # Loads auto-complete stuff
-if [ -f /sdcard/.bash-completion/bash_completion ]; then
-    . /sdcard/.bash-completion/bash_completion 2>/dev/null
+if [ -f "$HOME/.bash-completion/bash_completion" ]; then
+    . "$HOME/.bash-completion/bash_completion" 2>/dev/null
 fi
 
 ## True screen clearing
@@ -471,7 +471,7 @@ cool_places=(
     "/data/local/tmp"
     "/data/data/"
     "/data/user/0"
-    "/sdcard"
+    "$HOME"
 )
 
 

@@ -5,17 +5,23 @@ DIRNAME=$(dirname "$0")
 cd "$DIRNAME"
 
 ver=$(sed -n "s|^versionCode=||p" module.prop)
+currentVersion=$(sed -n "s|^version=v||p" module.prop)
 name=$(sed -n "s|^name=||p" module.prop | sed "s| |-|g")
 if [ .$1 == .github ]; then
     newVerCode="$ver"
+    newVersion="$currentVersion"
 else
     newVerCode=$((ver + 1))
+    newVersion=$(printf '%s' "$newVerCode" | \sed 's|^\([0-9]\)\([0-9]\)\([0-9][0-9]\)$|\1.\2.\3|')
 fi
-newVersion=$(echo $newVerCode | \sed 's|\(.\)\(.\)\(.\)|\1\.\2\.\3|')
+zipfile="$name-$newVersion.zip"
 
-sed --in-place "s|^versionCode=$ver|versionCode=$newVerCode|;s|^version=v.*|version=v$newVersion|" module.prop
-zip -r "$name-$newVersion".zip . -x ".git/*" "LICENSE" "build.sh" ".gitignore" "*.zip"
+if [ .$1 != .github ]; then
+    sed --in-place "s|^versionCode=$ver|versionCode=$newVerCode|;s|^version=v.*|version=v$newVersion|" module.prop
+fi
+rm -f "$zipfile"
+zip -r "$zipfile" META-INF common custom system install.sh module.prop
 # echo "$newVerCode" >../Deploy/version
-echo "Made $name-$newVersion ($newVerCode)"
+echo "Made $zipfile ($newVerCode)"
 
 cd "$OLDPWD"

@@ -156,62 +156,49 @@ print_modname() {
 
 on_install() {
     ui_print "- Extracting module files"
-    unzip -o "$ZIPFILE" 'system/*' -d $MODPATH >&2
-    unzip -o "$ZIPFILE" 'custom/*' -d $TMPDIR >&2
+    unzip -o "$ZIPFILE" 'system/*' -d "$MODPATH" >&2
+    unzip -o "$ZIPFILE" 'custom/*' -d "$TMPDIR" >&2
 
     if [ -d /system/xbin ]; then
         BIN=/system/xbin
-        mv $MODPATH/system/bin "$MODPATH$BIN"
+        mv "$MODPATH/system/bin" "$MODPATH$BIN"
     else
         BIN=/system/bin
     fi
     ui_print "- Setting BIN: $BIN."
 
-    # Detect device ABI
-    case "$ARCH" in
-        arm)
-            ui_print "- Detected architecture: arm"
-            mv $MODPATH$BIN/nano.bin-arm $MODPATH$BIN/nano
-            mv $MODPATH$BIN/bash-arm $MODPATH$BIN/bash
-            ;;
-        arm64)
-            ui_print "- Detected architecture: arm64"
-            mv $MODPATH$BIN/nano.bin-arm64 $MODPATH$BIN/nano
-            mv $MODPATH$BIN/bash-arm64 $MODPATH$BIN/bash
-            ;;
-        x86)
-            ui_print "- Detected architecture: x86 (unsupported)"
-            abort "x86 is not supported."
-            ;;
-        x64)
-            ui_print "- Detected architecture: x64 (unsupported)"
-            abort "x64 is not supported."
-            ;;
-        *)
-            ui_print "- Detected architecture: unknown"
-            abort "Unsupported architecture: $ARCH"
-            ;;
-    esac
-
-    # Cleanup unused binaries
-    rm -f $MODPATH$BIN/nano.bin-*
-    rm -f $MODPATH$BIN/bash-*
+    if [ "$ARCH" != "arm64" ]; then
+        abort "eMagisk standalone is arm64-only. Detected architecture: $ARCH"
+    fi
+    ui_print "- Detected architecture: arm64"
 
     ui_print "- Setting up mkshrc for the detected environment."
     if [ -d /sdcard ]; then
         SDCARD=/sdcard
     elif [ -d /storage/emulated/0 ]; then
         SDCARD=/storage/emulated/0
+    else
+        abort "Unable to locate the external storage mount for bashrc installation."
     fi
     ui_print "- Setting SDCARD: $SDCARD."
 
-    sed -i "s|<SDCARD>|$SDCARD|g" $MODPATH/system/etc/mkshrc
-    sed -i "s|<BIN>|$BIN|g" $MODPATH/system/etc/mkshrc
+    sed -i "s|<SDCARD>|$SDCARD|g" "$MODPATH/system/etc/mkshrc"
+    sed -i "s|<BIN>|$BIN|g" "$MODPATH/system/etc/mkshrc"
+
+    ui_print "- Seeding shell config to $SDCARD"
+    [ -f "$SDCARD/.bashrc" ] || cp "$TMPDIR/custom/bashrc" "$SDCARD/.bashrc" || abort "Failed to seed $SDCARD/.bashrc"
+    [ -f "$SDCARD/.inputrc" ] || cp "$TMPDIR/custom/inputrc" "$SDCARD/.inputrc" || abort "Failed to seed $SDCARD/.inputrc"
+    if [ ! -f "$SDCARD/.bash-completion/bash_completion" ]; then
+        mkdir -p "$SDCARD/.bash-completion" || abort "Failed to create $SDCARD/.bash-completion"
+        cp -r "$TMPDIR/custom/bash-completion/." "$SDCARD/.bash-completion/" || abort "Failed to seed bash-completion files"
+    fi
 
     ui_print "- Module files installed successfully!"
 }
 
 set_permissions() {
-    set_perm_recursive $MODPATH 0 0 1755 0744
-    set_perm_recursive $MODPATH$BIN 0 0 1755 0777
+    set_perm_recursive "$MODPATH" 0 0 0755 0644
+    set_perm_recursive "$MODPATH$BIN" 0 0 0755 0755
+    [ -f "$MODPATH/common/post-fs-data.sh" ] && set_perm "$MODPATH/common/post-fs-data.sh" 0 0 0755
+    [ -f "$MODPATH/common/service.sh" ] && set_perm "$MODPATH/common/service.sh" 0 0 0755
 }

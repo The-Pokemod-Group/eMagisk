@@ -1,7 +1,13 @@
 # eMagisk
 
-Installs useful binaries: bash, nano, strace, eventrec, tcpdump and others. Installs my bashrc as well.
-Links busybox binaries. Does a lot of other stuff.
+Standalone arm64-only Magisk shell module.
+
+It installs bash, nano, curl, sqlite3, strace, tcpdump, eventrec, and stackplz, then seeds the packaged shell config into external storage:
+- `.bashrc`
+- `.inputrc`
+- `.bash-completion/`
+
+The installer preserves existing user dotfiles by only seeding files that are missing.
 
 ----
 ## Changelog

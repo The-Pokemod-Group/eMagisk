@@ -1,24 +1,54 @@
-name: "pre-release"
+name: "release"
 
 on:
   push:
     branches:
-      - "master"
+      - "standalone"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  pre-release:
-    name: "Pre Release"
+  release:
+    name: "Build, Commit, and Release"
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[build]')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: "Configure Git"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       - name: "Build"
         run: |
           sh ./build.sh github
-      - uses: "marvinpinto/action-automatic-releases@latest"
+
+      - name: "Read Version"
+        id: version
+        run: |
+          version="$(sed -n 's/^version=v//p' module.prop)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: "Commit Release Artifact"
+        run: |
+          git add -f *.zip
+          if git diff --cached --quiet; then
+            echo "No release artifact changes to commit."
+            exit 0
+          fi
+          git commit -m "ci: add release artifact for v${{ steps.version.outputs.version }} [skip ci]"
+          git push
+
+      - name: "Create Release"
+        uses: softprops/action-gh-release@v2
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
-          prerelease: true
+          tag_name: "${{ steps.version.outputs.tag }}"
+          name: "eMagisk ${{ steps.version.outputs.tag }}"
           files: |
             *.zip
