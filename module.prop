@@ -1,7 +1,7 @@
 id=emichicks
 name=eMagisk
-version=v3.1
-versionCode=3100
+version=v4.0.1
+versionCode=4001
 author=emi
 description=Arm64 shell module with bash, curl, nano, sqlite3, strace, tcpdump, and dotfiles.
 minMagisk=20000

@@ -7,12 +7,26 @@ cd "$DIRNAME"
 ver=$(sed -n "s|^versionCode=||p" module.prop)
 currentVersion=$(sed -n "s|^version=v||p" module.prop)
 name=$(sed -n "s|^name=||p" module.prop | sed "s| |-|g")
+
+format_version() {
+    code="$1"
+    major=${code%"${code#?}"}
+    rest=${code#?}
+    minor=${rest%"${rest#?}"}
+    patch=${rest#??}
+    if [ "$patch" = "00" ]; then
+        printf '%s.%s' "$major" "$minor"
+    else
+        printf '%s.%s.%s' "$major" "$minor" "$patch"
+    fi
+}
+
 if [ .$1 == .github ]; then
     newVerCode="$ver"
     newVersion="$currentVersion"
 else
     newVerCode=$((ver + 1))
-    newVersion=$(printf '%s' "$newVerCode" | \sed 's|^\([0-9]\)\([0-9]\)\([0-9][0-9]\)$|\1.\2.\3|')
+    newVersion=$(format_version "$newVerCode")
 fi
 zipfile="$name-$newVersion.zip"
 

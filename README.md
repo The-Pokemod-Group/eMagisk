@@ -9,8 +9,29 @@ It installs bash, nano, curl, sqlite3, strace, tcpdump, eventrec, and stackplz, 
 
 The installer preserves existing user dotfiles by only seeding files that are missing.
 
+## Compatibility
+
+`v4.0` starts a new standalone compatibility line for this branch.
+
+- `arm64` only
+- standalone branch only
+- payload and release flow intentionally diverge from the old mixed-ABI / Atlas-era module history
+
 ----
 ## Changelog
+
+### 4.0
+- Breaking compatibility reset for the standalone branch.
+- Standardizes the payload as arm64-only.
+- Ships the validated standalone shell/tooling set: `bash`, `nano`, `curl`, `sqlite3`, `strace`, `tcpdump`, `eventrec`, and `stackplz`.
+- Seeds `.bashrc`, `.inputrc`, and `.bash-completion/` into external storage without overwriting existing user files.
+- Uses the `[build]`-gated GitHub release flow for publishing release zips.
+
+----
+## Legacy History
+
+Older `9.x` / `10.x` entries below refer to the earlier Atlas-oriented eMagisk line and are preserved only as historical context.
+
 ### 10.0.0
 - Removes everything related to Atlas
 
@@ -25,7 +46,7 @@ The installer preserves existing user dotfiles by only seeding files that are mi
 ### 5.4
 - Everything seems to be verkin.
 
-### 4.0
+### 4.0 (legacy line)
 - Suddenly, things work. `bash` runs automatically when opening an `adb shell` without the need to recompile `adbd`.
 - Also, following new practices and unity versions.
 
